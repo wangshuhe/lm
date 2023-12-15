@@ -1,0 +1,19 @@
+{
+  "target": "bmv2",
+  "p4info": "build/switch.p4.p4info.txt",
+  "bmv2_json": "build/switch.json",
+  "table_entries": [
+    {
+      "table": "MyIngress.idp_exact",
+      "match": {
+        "hdr.idp.dstSeaid": ["0000000000000000000000000000000000000001"]
+      },
+      "action_name": "MyIngress.idp_forward",
+      "action_params": {
+        "dstAddr": "08:00:00:00:0a:00",
+        "ip": "1000:0:0:0:0:0:0:4",
+        "port": 2
+      }
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "target": "bmv2",
+  "p4info": "build/switch.p4.p4info.txt",
+  "bmv2_json": "build/switch.json",
+  "table_entries": [
+    {
+      "table": "MyIngress.ipv6_exact",
+      "match": {
+        "hdr.ipv6.dstAddr": ["1000:0:0:0:0:0:0:4"]
+      },
+      "action_name": "MyIngress.ipv6_forward",
+      "action_params": {
+        "dstAddr": "08:00:00:00:04:00",
+        "port": 2
+      }
+    }
+  ]
+}
