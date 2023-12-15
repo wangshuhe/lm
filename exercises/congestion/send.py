@@ -4,7 +4,7 @@ import random
 import socket
 
 from scapy.all import IPv6, TCP, Ether, get_if_hwaddr, get_if_list, sendp
-
+from seadp import Idp, Common, SeadpData
 
 def get_if():
     ifs=get_if_list()
@@ -26,7 +26,7 @@ def main():
     iface = get_if()
 
     pkt =  Ether(src=get_if_hwaddr(iface), dst='08:00:00:00:01:00')
-    pkt = pkt / IPv6(dst='1000:0:0:0:0:0:0;1') / IDP(dstSeaid='0000000000000000000000000000000000000001') / Common / SeadpData / args.message
+    pkt = pkt / IPv6(dst='1000:0:0:0:0:0:0:1') / Idp(dstSeaid=0x1)  / Common(version=0x1) / SeadpData(flags=0x1) / args.message
     
     pkt.show2()
 #    hexdump(pkt)

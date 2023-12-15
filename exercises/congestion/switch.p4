@@ -190,12 +190,8 @@ control MyIngress(inout headers hdr,
     }
 
     apply {
-        if (idp_exact.lookup() == 0){
-            ipv6_exact.apply();
-        }
-        else{
-            ipv6_idp_exact.apply();
-        }
+        ipv6_exact.apply();
+        idp_exact.apply();
     }
 }
 

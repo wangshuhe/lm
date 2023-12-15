@@ -7,7 +7,7 @@ TYPE_SEADP = 0x01
 TYPE_SEADP_DATA = 0x00
 
 class Idp(Packet):
-    name = "IDP"
+    name = "Idp"
     fields_desc = [
         BitField("pType", 0, 8),
         BitField("headerLen", 0, 8),
@@ -38,7 +38,7 @@ class Common(Packet):
     name = "Common"
     fields_desc = [
         BitField("version", 0, 8),
-        BitField("type", 0, 8),
+        BitField("ctype", 0, 8),
     ]
 
     def mysummary(self):
@@ -67,6 +67,6 @@ class SeadpData(Packet):
             self.checksum, self.packet_number, self.offset, self.len
         )
 
-bind_layers(IPv6, IDP, nextHeader=TYPE_IDP)
-bind_layers(IDP, Common, pType=TYPE_SEADP)
-bind_layers(Common, SeadpData, type=TYPE_SEADP_DATA)
+bind_layers(IPv6, Idp, nh=TYPE_IDP)
+bind_layers(Idp, Common, pType=TYPE_SEADP)
+bind_layers(Common, SeadpData, ctype=TYPE_SEADP_DATA)
