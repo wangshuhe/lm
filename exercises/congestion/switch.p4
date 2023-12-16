@@ -67,7 +67,8 @@ header seadp_data_t{
 }
 
 struct metadata {
-    /* empty */
+    bit<16>   typo_select;
+    bit<6>    typo;
 }
 
 struct headers {
