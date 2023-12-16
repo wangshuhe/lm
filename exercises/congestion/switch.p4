@@ -7,6 +7,9 @@ const bit<8>  TYPE_IDP = 0x92;
 const bit<8>  TYPE_SEADP = 0x01;
 const bit<8>  TYPE_SEADP_DATA = 0x00;
 
+const bit<16>  RANGE_MIN = 0;
+const bit<16>  RANGE_MAX = 100;
+
 /*************************************************************************
 *********************** H E A D E R S  ***********************************
 *************************************************************************/
@@ -153,11 +156,12 @@ control MyIngress(inout headers hdr,
         standard_metadata.egress_spec = port;
         hdr.ipv6.dstAddr = ip;
         hdr.ipv6.hopLimit = hdr.ipv6.hopLimit - 1;
+        hdr.idp.srvType = meta.typo;
     }
 
     table idp_exact {
         key = {
-            hdr.idp.dstSeaid: exact;
+            meta.typo: exact;
         }
         actions = {
             idp_forward;
@@ -190,7 +194,26 @@ control MyIngress(inout headers hdr,
 
     apply {
         ipv6_exact.apply();
-        idp_exact.apply();
+
+        if (hdr.idp.isValid() && hdr.seadp.isValid()) {
+            // 计算哈希值
+            hash(meta.typo_select,
+            HashAlgorithm.crc16,
+            RANGE_MIN,
+            { hdr.idp.srcSeaid,
+              hdr.idp.dstSeaid,
+              hdr.seadp.packet_number },
+            RANGE_MAX);
+            // 选择拓扑
+            if(meta.typo_select < 50){
+                meta.typo = 1;
+            }
+            else{
+                meta.typo = 2;
+            }
+            // 根据拓扑选路
+            idp_exact.apply();
+        }
     }
 }
 

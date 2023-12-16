@@ -6,13 +6,25 @@
     {
       "table": "MyIngress.idp_exact",
       "match": {
-        "hdr.idp.dstSeaid": ["0000000000000000000000000000000000000001"]
+        "meta.typo": 1
       },
       "action_name": "MyIngress.idp_forward",
       "action_params": {
         "dstAddr": "08:00:00:00:08:00",
         "ip": "1000:0:0:0:0:0:0:2",
         "port": 2
+      }
+    },
+    {
+      "table": "MyIngress.idp_exact",
+      "match": {
+        "meta.typo": 2
+      },
+      "action_name": "MyIngress.idp_forward",
+      "action_params": {
+        "dstAddr": "08:00:00:00:09:00",
+        "ip": "1000:0:0:0:0:0:0:3",
+        "port": 3
       }
     }
   ]
