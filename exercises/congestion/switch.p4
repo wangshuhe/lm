@@ -151,13 +151,14 @@ control MyIngress(inout headers hdr,
         mark_to_drop(standard_metadata);
     }
 
-    action idp_forward(macAddr_t dstAddr, ip6Addr_t ip, egressSpec_t port) {
+    action idp_forward(macAddr_t dstAddr, ip6Addr_t ip, egressSpec_t port, ip6Addr_t cur_ip) {
         hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
         hdr.ethernet.dstAddr = dstAddr;
         standard_metadata.egress_spec = port;
         hdr.ipv6.dstAddr = ip;
         hdr.ipv6.hopLimit = hdr.ipv6.hopLimit - 1;
         hdr.idp.srvType = meta.typo;
+        hdr.seadp.rs_ip = cur_ip;
     }
 
     table idp_exact {
