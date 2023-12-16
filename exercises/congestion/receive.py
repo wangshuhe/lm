@@ -3,7 +3,7 @@ import os
 import sys
 
 from scapy.all import TCP, get_if_list, sniff
-
+from seadp import Idp, Common, SeadpData
 
 def get_if():
     ifs=get_if_list()
@@ -18,11 +18,12 @@ def get_if():
     return iface
 
 def handle_pkt(pkt):
-    print("got a packet")
-    pkt.show2()
+    if Idp in pkt:
+        print("got a packet")
+        pkt.show2()
 #        hexdump(pkt)
 #        print "len(pkt) = ", len(pkt)
-    sys.stdout.flush()
+        sys.stdout.flush()
 
 
 def main():

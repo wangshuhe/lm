@@ -14,7 +14,6 @@ const bit<8>  TYPE_SEADP_DATA = 0x00;
 typedef bit<9>  egressSpec_t;
 typedef bit<48> macAddr_t;
 typedef bit<128> ip6Addr_t;
-typedef bit<6>  typo_t;
 
 header ethernet_t {
     macAddr_t dstAddr;
@@ -50,7 +49,7 @@ header idp_t{
 
 header common_t{
     bit<8> version;
-    bit<8> type;
+    bit<8> ctype;
 }
 
 header seadp_data_t{
@@ -115,7 +114,7 @@ parser MyParser(packet_in packet,
 
     state parse_common{
         packet.extract(hdr.common);
-        transition select(hdr.common.type){
+        transition select(hdr.common.ctype){
             TYPE_SEADP_DATA: parse_seadp_data;
             default: accept;
         }
@@ -166,7 +165,7 @@ control MyIngress(inout headers hdr,
             NoAction;
         }
         size = 1024;
-        default_action = drop();
+        default_action = NoAction();
     }
 
     action ipv6_forward(macAddr_t dstAddr, egressSpec_t port) {
@@ -186,7 +185,7 @@ control MyIngress(inout headers hdr,
             NoAction;
         }
         size = 1024;
-        default_action = drop();
+        default_action = NoAction();
     }
 
     apply {
