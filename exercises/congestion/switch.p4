@@ -13,7 +13,7 @@ const bit<16>  RANGE_MAX = 100;
 const bit<32> MAX_VALUE = 0xFFFFFFFF;
 const bit<32> MIN_VALUE = 0x0;
 
-#define  MAX_RECORD 100000;
+#define  MAX_RECORD 100000
 
 /*************************************************************************
 *********************** H E A D E R S  ***********************************
@@ -236,36 +236,38 @@ control MyIngress(inout headers hdr,
 control MyEgress(inout headers hdr,
                  inout metadata meta,
                  inout standard_metadata_t standard_metadata) {
-    register <record>(MAX_RECORD) records;
+    register <bit<32>>(MAX_RECORD) records;
     register <bit<32>>(MAX_RECORD) map;
     register <bit<32>> (1) index_register;
     register <bit<32>> (1) max_recv_register;
     register <bit<32>> (1) loss_register;
     apply { 
-        if(hdr.seadp.packet_number % 10 == 0){
+        if(hdr.seadp.packet_number & 0b00111 == 0){
             // 记录发包
             bit<32> index;
             index_register.read(index, 0);
-            record cur;
-            cur.received = 0;
-            hash(cur.id,HashAlgorithm.crc32,MIN_VALUE,
+            bit<32> cur;
+            hash(cur,HashAlgorithm.crc32,MIN_VALUE,
             { hdr.idp.srcSeaid,
               hdr.idp.dstSeaid,
               hdr.seadp.packet_number },
             MAX_VALUE);
-            register_write(records, index, cur);
-            register_write(map, cur.id, index);
-            index = （index + 1）% MAX_RECORD;
+            records.write(index, cur);
+            map.write(cur, index);
+            index = index + 1;
             index_register.write(0, index);
             // 发送确认
-            clone_egress.clone(hdr);
-            hdr.egress_spec = meta.ingress_port;
-            hdr.ipv6.dstAddr = hdr.seadp.rs_ip;
-            hdr.seadp.rs_ip = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-            hdr.ipv6.hopLimit = 64;
-            tmp = hdr.ethernet.srcAddr;
-            hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
-            hdr.ethernet.dstAddr = tmp;
+            clone(CloneType.E2E, 1);
+            if(true){    
+                standard_metadata.egress_spec = standard_metadata.ingress_port;
+                hdr.ipv6.dstAddr = hdr.seadp.rs_ip;
+                hdr.seadp.rs_ip = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+                hdr.ipv6.hopLimit = 64;
+                bit<48> tmp;
+                tmp = hdr.ethernet.srcAddr;
+                hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
+                hdr.ethernet.dstAddr = tmp;
+            }
         }
         // 处理确认包
         if(hdr.seadp.rs_ip == 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF){
@@ -277,130 +279,123 @@ control MyEgress(inout headers hdr,
             MAX_VALUE);
             bit<32> index;
             map.read(index, id);
-            record cur;
-            cur.received = 1;
-            hash(cur.id,HashAlgorithm.crc32,MIN_VALUE,
-            { hdr.idp.srcSeaid,
-              hdr.idp.dstSeaid,
-              hdr.seadp.packet_number },
-            MAX_VALUE);
-            register_write(records, index, cur);
+            records.write(index, 0);
             bit<32> max_recv;
             max_recv_register.read(max_recv, 0);
             if(index > max_recv)
             max_recv_register.write(0, index);
         }
         // 检测丢包
-        if(hdr.seadp.packet_number % 10 == 0){
+        if(hdr.seadp.packet_number & 0b00111 == 0){
             bit<32> max_recv;
             max_recv_register.read(max_recv, 0);
             if(max_recv > 20){
                 bit<32> loss = 0;
-                bit<32> i = maxrecv;
-                record cur;
+                bit<32> i = max_recv;
+                bit<32> cur;
 
                 records.read(cur, i);
-                if(cur.received != 1){
+                if(cur != 0){
                     loss = loss + 1;
                 }
                 i = i - 1;
                 records.read(cur, i);
-                if(cur.received != 1){
+                if(cur != 0){
                     loss = loss + 1;
                 }
                 i = i - 1;
                 records.read(cur, i);
-                if(cur.received != 1){
+                if(cur != 0){
                     loss = loss + 1;
                 }
                 i = i - 1;
                 records.read(cur, i);
-                if(cur.received != 1){
+                if(cur != 0){
                     loss = loss + 1;
                 }
                 i = i - 1;
                 records.read(cur, i);
-                if(cur.received != 1){
+                if(cur != 0){
                     loss = loss + 1;
                 }
                 i = i - 1;
                 records.read(cur, i);
-                if(cur.received != 1){
+                if(cur != 0){
                     loss = loss + 1;
                 }
                 i = i - 1;
                 records.read(cur, i);
-                if(cur.received != 1){
+                if(cur != 0){
                     loss = loss + 1;
                 }
                 i = i - 1;
                 records.read(cur, i);
-                if(cur.received != 1){
+                if(cur != 0){
                     loss = loss + 1;
                 }
                 i = i - 1;
                 records.read(cur, i);
-                if(cur.received != 1){
+                if(cur != 0){
                     loss = loss + 1;
                 }
                 i = i - 1;
                 records.read(cur, i);
-                if(cur.received != 1){
+                if(cur != 0){
                     loss = loss + 1;
                 }
                 i = i - 1;
                 records.read(cur, i);
-                if(cur.received != 1){
+                if(cur != 0){
                     loss = loss + 1;
                 }
                 i = i - 1;
                 records.read(cur, i);
-                if(cur.received != 1){
+                if(cur != 0){
                     loss = loss + 1;
                 }
                 i = i - 1;
                 records.read(cur, i);
-                if(cur.received != 1){
+                if(cur != 0){
                     loss = loss + 1;
                 }
                 i = i - 1;
                 records.read(cur, i);
-                if(cur.received != 1){
+                if(cur != 0){
                     loss = loss + 1;
                 }
                 i = i - 1;
                 records.read(cur, i);
-                if(cur.received != 1){
+                if(cur != 0){
                     loss = loss + 1;
                 }
                 i = i - 1;
                 records.read(cur, i);
-                if(cur.received != 1){
+                if(cur != 0){
                     loss = loss + 1;
                 }
                 i = i - 1;
                 records.read(cur, i);
-                if(cur.received != 1){
+                if(cur != 0){
                     loss = loss + 1;
                 }
                 i = i - 1;
                 records.read(cur, i);
-                if(cur.received != 1){
+                if(cur != 0){
                     loss = loss + 1;
                 }
                 i = i - 1;
                 records.read(cur, i);
-                if(cur.received != 1){
+                if(cur != 0){
                     loss = loss + 1;
                 }
                 i = i - 1;
                 records.read(cur, i);
-                if(cur.received != 1){
+                if(cur != 0){
                     loss = loss + 1;
                 }
                 i = i - 1;
                 
-                bit<32> loss_rate = loss / 20 * 100;
+                bit<32> loss_rate = loss * 5;
                 loss_register.write(0, loss_rate);
             }
         }
