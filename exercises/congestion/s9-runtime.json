@@ -6,7 +6,7 @@
     {
       "table": "MyIngress.ipv6_exact",
       "match": {
-        "hdr.ipv6.dstAddr": ["1000:0:0:0:0:0:0:2"]
+        "hdr.ipv6.dstAddr": ["1000:0:0:0:0:0:0:3"]
       },
       "action_name": "MyIngress.ipv6_forward",
       "action_params": {
