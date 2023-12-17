@@ -13,6 +13,50 @@
         "dstAddr": "08:00:00:00:02:22",
         "port": 5
       }
+    },
+    {
+      "table": "MyIngress.ipv6_exact",
+      "match": {
+        "hdr.ipv6.dstAddr": ["1000:0:0:0:0:0:0:4"]
+      },
+      "action_name": "MyIngress.ipv6_forward",
+      "action_params": {
+        "dstAddr": "08:00:00:00:04:00",
+        "port": 1
+      }
+    },
+    {
+      "table": "MyIngress.ipv6_exact",
+      "match": {
+        "hdr.ipv6.dstAddr": ["1000:0:0:0:0:0:0:5"]
+      },
+      "action_name": "MyIngress.ipv6_forward",
+      "action_params": {
+        "dstAddr": "08:00:00:00:05:00",
+        "port": 2
+      }
+    },
+    {
+      "table": "MyIngress.ipv6_exact",
+      "match": {
+        "hdr.ipv6.dstAddr": ["1000:0:0:0:0:0:0:6"]
+      },
+      "action_name": "MyIngress.ipv6_forward",
+      "action_params": {
+        "dstAddr": "08:00:00:00:06:00",
+        "port": 3
+      }
+    },
+    {
+      "table": "MyIngress.ipv6_exact",
+      "match": {
+        "hdr.ipv6.dstAddr": ["1000:0:0:0:0:0:0:7"]
+      },
+      "action_name": "MyIngress.ipv6_forward",
+      "action_params": {
+        "dstAddr": "08:00:00:00:07:00",
+        "port": 4
+      }
     }
   ]
 }

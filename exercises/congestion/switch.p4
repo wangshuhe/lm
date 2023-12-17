@@ -13,7 +13,7 @@ const bit<16>  RANGE_MAX = 100;
 const bit<32> MAX_VALUE = 0xFFFFFFFF;
 const bit<32> MIN_VALUE = 0x0;
 
-#define  MAX_RECORD 100000
+#define  MAX_RECORD 1000000
 
 /*************************************************************************
 *********************** H E A D E R S  ***********************************
@@ -79,6 +79,7 @@ header seadp_data_t{
 struct metadata {
     bit<16>   typo_select;
     bit<6>    typo;
+    bit<1>    router;
 }
 
 struct headers {
@@ -157,6 +158,13 @@ control MyVerifyChecksum(inout headers hdr, inout metadata meta) {
 control MyIngress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
+
+    register <bit<32>>(MAX_RECORD) records;
+    register <bit<32>>(MAX_RECORD) map;
+    register <bit<32>> (1) index_register;
+    register <bit<32>> (1) max_recv_register;
+    register <bit<32>> (1) loss_register;
+
     action drop() {
         mark_to_drop(standard_metadata);
     }
@@ -189,6 +197,7 @@ control MyIngress(inout headers hdr,
         hdr.ethernet.dstAddr = dstAddr;
         standard_metadata.egress_spec = port;
         hdr.ipv6.hopLimit = hdr.ipv6.hopLimit - 1;
+        meta.router = 1;
     }
 
     table ipv6_exact {
@@ -207,24 +216,179 @@ control MyIngress(inout headers hdr,
     apply {
         ipv6_exact.apply();
 
-        if (hdr.idp.isValid() && hdr.seadp.isValid()) {
-            // 计算哈希值
-            hash(meta.typo_select,
-            HashAlgorithm.crc16,
-            RANGE_MIN,
-            { hdr.idp.srcSeaid,
-              hdr.idp.dstSeaid,
-              hdr.seadp.packet_number },
-            RANGE_MAX);
-            // 选择拓扑
-            if(meta.typo_select < 50){
-                meta.typo = 1;
+        if(meta.router == 0){
+            if (hdr.idp.isValid() && hdr.seadp.isValid()) {
+                
+                // 处理确认包
+                if(hdr.seadp.rs_ip == 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF){
+                    bit<32> id;
+                    hash(id,HashAlgorithm.crc32,MIN_VALUE,
+                    { hdr.idp.srcSeaid,
+                    hdr.idp.dstSeaid,
+                    hdr.seadp.packet_number },
+                    MAX_VALUE);
+                    bit<32> index;
+                    map.read(index, id);
+                    records.write(index, 0);
+                    bit<32> max_recv;
+                    max_recv_register.read(max_recv, 0);
+                    if(index > max_recv)
+                    max_recv_register.write(0, index);
+                    drop();
+                }
+
+                // 计算哈希值
+                hash(meta.typo_select,
+                HashAlgorithm.crc16,
+                RANGE_MIN,
+                { hdr.idp.srcSeaid,
+                hdr.idp.dstSeaid,
+                hdr.seadp.packet_number },
+                RANGE_MAX);
+                // 选择拓扑
+                if(meta.typo_select < 50){
+                    meta.typo = 1;
+                }
+                else{
+                    meta.typo = 2;
+                }
+                // 根据拓扑选路
+                idp_exact.apply();
+
+                // 记录发包
+                if(hdr.seadp.packet_number & 0b00111 == 0){
+                    bit<32> index;
+                    index_register.read(index, 0);
+                    bit<32> cur;
+                    hash(cur,HashAlgorithm.crc32,MIN_VALUE,
+                    { hdr.idp.srcSeaid,
+                    hdr.idp.dstSeaid,
+                    hdr.seadp.packet_number },
+                    MAX_VALUE);
+                    records.write(index, cur);
+                    map.write(cur, index);
+                    index = index + 1;
+                    index_register.write(0, index);
+                }
+
+                // 检测丢包  8*16
+                if(hdr.seadp.packet_number & 0b001111111 == 0 ){
+                    bit<32> max_recv;
+                    max_recv_register.read(max_recv, 0);
+                    if(max_recv > 120){
+                        bit<32> loss = 0;
+                        bit<32> i = max_recv - 100;
+                        bit<32> cur;
+
+                        records.read(cur, i);
+                        if(cur != 0){
+                            loss = loss + 1;
+                        }
+                        i = i - 1;
+                        records.read(cur, i);
+                        if(cur != 0){
+                            loss = loss + 1;
+                        }
+                        i = i - 1;
+                        records.read(cur, i);
+                        if(cur != 0){
+                            loss = loss + 1;
+                        }
+                        i = i - 1;
+                        records.read(cur, i);
+                        if(cur != 0){
+                            loss = loss + 1;
+                        }
+                        i = i - 1;
+                        records.read(cur, i);
+                        if(cur != 0){
+                            loss = loss + 1;
+                        }
+                        i = i - 1;
+                        records.read(cur, i);
+                        if(cur != 0){
+                            loss = loss + 1;
+                        }
+                        i = i - 1;
+                        records.read(cur, i);
+                        if(cur != 0){
+                            loss = loss + 1;
+                        }
+                        i = i - 1;
+                        records.read(cur, i);
+                        if(cur != 0){
+                            loss = loss + 1;
+                        }
+                        i = i - 1;
+                        records.read(cur, i);
+                        if(cur != 0){
+                            loss = loss + 1;
+                        }
+                        i = i - 1;
+                        records.read(cur, i);
+                        if(cur != 0){
+                            loss = loss + 1;
+                        }
+                        i = i - 1;
+                        records.read(cur, i);
+                        if(cur != 0){
+                            loss = loss + 1;
+                        }
+                        i = i - 1;
+                        records.read(cur, i);
+                        if(cur != 0){
+                            loss = loss + 1;
+                        }
+                        i = i - 1;
+                        records.read(cur, i);
+                        if(cur != 0){
+                            loss = loss + 1;
+                        }
+                        i = i - 1;
+                        records.read(cur, i);
+                        if(cur != 0){
+                            loss = loss + 1;
+                        }
+                        i = i - 1;
+                        records.read(cur, i);
+                        if(cur != 0){
+                            loss = loss + 1;
+                        }
+                        i = i - 1;
+                        records.read(cur, i);
+                        if(cur != 0){
+                            loss = loss + 1;
+                        }
+                        i = i - 1;
+                        records.read(cur, i);
+                        if(cur != 0){
+                            loss = loss + 1;
+                        }
+                        i = i - 1;
+                        records.read(cur, i);
+                        if(cur != 0){
+                            loss = loss + 1;
+                        }
+                        i = i - 1;
+                        records.read(cur, i);
+                        if(cur != 0){
+                            loss = loss + 1;
+                        }
+                        i = i - 1;
+                        records.read(cur, i);
+                        if(cur != 0){
+                            loss = loss + 1;
+                        }
+                        
+                        bit<32> loss_rate = loss * 5;
+                        loss_register.write(0, loss_rate);
+                    }
+                }
+                // 包复制
+                if(hdr.seadp.packet_number & 0b00111 == 0 && hdr.seadp.rs_ip != 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF){
+                    clone(CloneType.I2E, 250);
+                }
             }
-            else{
-                meta.typo = 2;
-            }
-            // 根据拓扑选路
-            idp_exact.apply();
         }
     }
 }
@@ -236,170 +400,18 @@ control MyIngress(inout headers hdr,
 control MyEgress(inout headers hdr,
                  inout metadata meta,
                  inout standard_metadata_t standard_metadata) {
-    register <bit<32>>(MAX_RECORD) records;
-    register <bit<32>>(MAX_RECORD) map;
-    register <bit<32>> (1) index_register;
-    register <bit<32>> (1) max_recv_register;
-    register <bit<32>> (1) loss_register;
+
     apply { 
-        if(hdr.seadp.packet_number & 0b00111 == 0){
-            // 记录发包
-            bit<32> index;
-            index_register.read(index, 0);
-            bit<32> cur;
-            hash(cur,HashAlgorithm.crc32,MIN_VALUE,
-            { hdr.idp.srcSeaid,
-              hdr.idp.dstSeaid,
-              hdr.seadp.packet_number },
-            MAX_VALUE);
-            records.write(index, cur);
-            map.write(cur, index);
-            index = index + 1;
-            index_register.write(0, index);
-            // 发送确认
-            clone(CloneType.E2E, 1);
-            if(true){    
-                standard_metadata.egress_spec = standard_metadata.ingress_port;
-                hdr.ipv6.dstAddr = hdr.seadp.rs_ip;
-                hdr.seadp.rs_ip = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-                hdr.ipv6.hopLimit = 64;
-                bit<48> tmp;
-                tmp = hdr.ethernet.srcAddr;
-                hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
-                hdr.ethernet.dstAddr = tmp;
-            }
+        if(standard_metadata.instance_type == 1){
+            hdr.ipv6.dstAddr = hdr.seadp.rs_ip;
+            hdr.seadp.rs_ip = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+            hdr.ipv6.hopLimit = 64;
+            bit<48> tmp;
+            tmp = hdr.ethernet.srcAddr;
+            hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
+            hdr.ethernet.dstAddr = tmp;
         }
-        // 处理确认包
-        if(hdr.seadp.rs_ip == 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF){
-            bit<32> id;
-            hash(id,HashAlgorithm.crc32,MIN_VALUE,
-            { hdr.idp.srcSeaid,
-              hdr.idp.dstSeaid,
-              hdr.seadp.packet_number },
-            MAX_VALUE);
-            bit<32> index;
-            map.read(index, id);
-            records.write(index, 0);
-            bit<32> max_recv;
-            max_recv_register.read(max_recv, 0);
-            if(index > max_recv)
-            max_recv_register.write(0, index);
-        }
-        // 检测丢包
-        if(hdr.seadp.packet_number & 0b00111 == 0){
-            bit<32> max_recv;
-            max_recv_register.read(max_recv, 0);
-            if(max_recv > 20){
-                bit<32> loss = 0;
-                bit<32> i = max_recv;
-                bit<32> cur;
-
-                records.read(cur, i);
-                if(cur != 0){
-                    loss = loss + 1;
-                }
-                i = i - 1;
-                records.read(cur, i);
-                if(cur != 0){
-                    loss = loss + 1;
-                }
-                i = i - 1;
-                records.read(cur, i);
-                if(cur != 0){
-                    loss = loss + 1;
-                }
-                i = i - 1;
-                records.read(cur, i);
-                if(cur != 0){
-                    loss = loss + 1;
-                }
-                i = i - 1;
-                records.read(cur, i);
-                if(cur != 0){
-                    loss = loss + 1;
-                }
-                i = i - 1;
-                records.read(cur, i);
-                if(cur != 0){
-                    loss = loss + 1;
-                }
-                i = i - 1;
-                records.read(cur, i);
-                if(cur != 0){
-                    loss = loss + 1;
-                }
-                i = i - 1;
-                records.read(cur, i);
-                if(cur != 0){
-                    loss = loss + 1;
-                }
-                i = i - 1;
-                records.read(cur, i);
-                if(cur != 0){
-                    loss = loss + 1;
-                }
-                i = i - 1;
-                records.read(cur, i);
-                if(cur != 0){
-                    loss = loss + 1;
-                }
-                i = i - 1;
-                records.read(cur, i);
-                if(cur != 0){
-                    loss = loss + 1;
-                }
-                i = i - 1;
-                records.read(cur, i);
-                if(cur != 0){
-                    loss = loss + 1;
-                }
-                i = i - 1;
-                records.read(cur, i);
-                if(cur != 0){
-                    loss = loss + 1;
-                }
-                i = i - 1;
-                records.read(cur, i);
-                if(cur != 0){
-                    loss = loss + 1;
-                }
-                i = i - 1;
-                records.read(cur, i);
-                if(cur != 0){
-                    loss = loss + 1;
-                }
-                i = i - 1;
-                records.read(cur, i);
-                if(cur != 0){
-                    loss = loss + 1;
-                }
-                i = i - 1;
-                records.read(cur, i);
-                if(cur != 0){
-                    loss = loss + 1;
-                }
-                i = i - 1;
-                records.read(cur, i);
-                if(cur != 0){
-                    loss = loss + 1;
-                }
-                i = i - 1;
-                records.read(cur, i);
-                if(cur != 0){
-                    loss = loss + 1;
-                }
-                i = i - 1;
-                records.read(cur, i);
-                if(cur != 0){
-                    loss = loss + 1;
-                }
-                i = i - 1;
-                
-                bit<32> loss_rate = loss * 5;
-                loss_register.write(0, loss_rate);
-            }
-        }
-
+            
      }
 }
 
