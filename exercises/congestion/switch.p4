@@ -246,6 +246,7 @@ control MyIngress(inout headers hdr,
                     RANGE_MIN,
                     { hdr.idp.srcSeaid,
                     hdr.idp.dstSeaid,
+                    hdr.ipv6.hopLimit,
                     hdr.seadp.packet_number },
                     RANGE_MAX);
                     // 选择拓扑
