@@ -24,7 +24,6 @@ struct record {
     bit<1>    received;
 }
 
-typedef bit<32> session_t;
 typedef bit<9>  egressSpec_t;
 typedef bit<48> macAddr_t;
 typedef bit<128> ip6Addr_t;
@@ -193,23 +192,12 @@ control MyIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    action myclone(session_t session_id){
-        clone(CloneType.I2E, session_id);
-    }
-
     action ipv6_forward(macAddr_t dstAddr, egressSpec_t port) {
         hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
         hdr.ethernet.dstAddr = dstAddr;
         standard_metadata.egress_spec = port;
         hdr.ipv6.hopLimit = hdr.ipv6.hopLimit - 1;
         meta.router = 1;
-    }
-
-    table myCloneTable{
-        key = {hdr.idp.pType: exact;}
-        actions = {myclone;NoAction;}
-        size = 2;
-        default_action = NoAction();
     }
 
     table ipv6_exact {
@@ -398,7 +386,7 @@ control MyIngress(inout headers hdr,
                 }
                 // 包复制
                 if(hdr.seadp.packet_number & 0b00111 == 0 && hdr.seadp.rs_ip != 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF){
-                    myCloneTable.apply();
+                    clone(CloneType.I2E, 250);
                 }
             }
         }

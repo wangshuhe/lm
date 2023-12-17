@@ -4,16 +4,6 @@
   "bmv2_json": "build/switch.json",
   "table_entries": [
     {
-      "table": "MyIngress.myCloneTable",
-      "match": {
-        "hdr.idp.pType": 1
-      },
-      "action_name": "MyIngress.myclone",
-      "action_params": {
-        "session_id": 254
-      }
-    },
-    {
       "table": "MyIngress.idp_exact",
       "match": {
         "meta.typo": 1
