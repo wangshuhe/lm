@@ -10,10 +10,10 @@ const bit<8>  TYPE_SEADP_DATA = 0x00;
 const bit<16>  RANGE_MIN = 0;
 const bit<16>  RANGE_MAX = 100;
 
-const bit<32> MAX_VALUE = 0xFFFFFFFF;
+const bit<32> MAX_VALUE = 10000;
 const bit<32> MIN_VALUE = 0x0;
 
-#define  MAX_RECORD 1000000
+#define  MAX_RECORD MAX_VALUE
 
 /*************************************************************************
 *********************** H E A D E R S  ***********************************
@@ -275,9 +275,9 @@ control MyIngress(inout headers hdr,
                 if(hdr.seadp.packet_number & 0b001111111 == 0 ){
                     bit<32> max_recv;
                     max_recv_register.read(max_recv, 0);
-                    if(max_recv > 120){
+                    if(max_recv > 20){
                         bit<32> loss = 0;
-                        bit<32> i = max_recv - 100;
+                        bit<32> i = max_recv;
                         bit<32> cur;
 
                         records.read(cur, i);
