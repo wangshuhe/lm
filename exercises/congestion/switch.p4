@@ -80,6 +80,7 @@ struct metadata {
     bit<16>   typo_select;
     bit<6>    typo;
     bit<1>    router;
+    bit<1>    drop;
 }
 
 struct headers {
@@ -167,6 +168,7 @@ control MyIngress(inout headers hdr,
 
     action drop() {
         mark_to_drop(standard_metadata);
+        meta.drop = 1;
     }
 
     action idp_forward(macAddr_t dstAddr, ip6Addr_t ip, egressSpec_t port, ip6Addr_t cur_ip) {
@@ -238,25 +240,27 @@ control MyIngress(inout headers hdr,
                 }
 
                 // 计算哈希值
-                hash(meta.typo_select,
-                HashAlgorithm.crc16,
-                RANGE_MIN,
-                { hdr.idp.srcSeaid,
-                hdr.idp.dstSeaid,
-                hdr.seadp.packet_number },
-                RANGE_MAX);
-                // 选择拓扑
-                if(meta.typo_select < 50){
-                    meta.typo = 1;
+                if(meta.drop == 0){
+                    hash(meta.typo_select,
+                    HashAlgorithm.crc16,
+                    RANGE_MIN,
+                    { hdr.idp.srcSeaid,
+                    hdr.idp.dstSeaid,
+                    hdr.seadp.packet_number },
+                    RANGE_MAX);
+                    // 选择拓扑
+                    if(meta.typo_select < 50){
+                        meta.typo = 1;
+                    } 
+                    else{
+                        meta.typo = 2;
+                    }
+                    // 根据拓扑选路
+                    idp_exact.apply();
                 }
-                else{
-                    meta.typo = 2;
-                }
-                // 根据拓扑选路
-                idp_exact.apply();
 
                 // 记录发包
-                if(hdr.seadp.packet_number & 0b00111 == 0){
+                if(hdr.seadp.packet_number & 0b00111 == 0 && meta.drop == 0){
                     bit<32> index;
                     index_register.read(index, 0);
                     bit<32> cur;
@@ -272,7 +276,7 @@ control MyIngress(inout headers hdr,
                 }
 
                 // 检测丢包  8*16
-                if(hdr.seadp.packet_number & 0b001111111 == 0 ){
+                if(hdr.seadp.packet_number & 0b001111111 == 0 && meta.drop == 0){
                     bit<32> max_recv;
                     max_recv_register.read(max_recv, 0);
                     if(max_recv > 20){
@@ -385,7 +389,7 @@ control MyIngress(inout headers hdr,
                     }
                 }
                 // 包复制
-                if(hdr.seadp.packet_number & 0b00111 == 0 && hdr.seadp.rs_ip != 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF){
+                if(hdr.seadp.packet_number & 0b00111 == 0 && hdr.seadp.rs_ip != 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF && meta.drop == 0){
                     clone(CloneType.I2E, 250);
                 }
             }
