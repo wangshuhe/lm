@@ -206,7 +206,7 @@ control MyIngress(inout headers hdr,
     }
 
     table myCloneTable{
-        key = {hdr.idp.pType: exact};
+        key = {hdr.idp.pType: exact;}
         actions = {myclone;NoAction;}
         size = 2;
         default_action = NoAction();
