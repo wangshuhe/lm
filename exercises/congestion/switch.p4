@@ -197,13 +197,13 @@ control MyIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    action ipv6_forward(macAddr_t dstAddr, egressSpec_t port, drop_t drop) {
+    action ipv6_forward(macAddr_t dstAddr, egressSpec_t port, drop_t drops) {
         hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
         hdr.ethernet.dstAddr = dstAddr;
         standard_metadata.egress_spec = port;
         hdr.ipv6.hopLimit = hdr.ipv6.hopLimit - 1;
         meta.router = 1;
-        if(drop == 1){
+        if(drops == 1){
             bit<32> choose;
             hash(choose,HashAlgorithm.crc32,MIN_VALUE,
             {hdr.idp.dstSeaid,
@@ -403,9 +403,9 @@ control MyIngress(inout headers hdr,
                         }
 
                         bit<32> loss1_rate = loss1 * 10;
-                        loss_register1.write(0, loss1_rate);
+                        loss1_register.write(0, loss1_rate);
                         bit<32> loss2_rate = loss2 * 10;
-                        loss_register2.write(0, loss2_rate);
+                        loss2_register.write(0, loss2_rate);
                     }
                 }
                 // 包复制
