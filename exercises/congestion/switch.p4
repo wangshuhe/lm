@@ -19,10 +19,6 @@ const bit<32> MIN_VALUE = 0x0;
 *********************** H E A D E R S  ***********************************
 *************************************************************************/
 
-struct record {
-    bit<32>   id;
-    bit<1>    received;
-}
 
 typedef bit<9>  egressSpec_t;
 typedef bit<48> macAddr_t;
@@ -284,7 +280,7 @@ control MyIngress(inout headers hdr,
                     loss1_register.read(loss1, 0);
                     loss2_register.read(loss2, 0);
                     bit<32> offset;
-                    offset = 50 + loss2 - loss1;
+                    offset = 50 + loss2 + loss2 -loss1 - loss1;
                     if(meta.typo_select < offset ){
                         meta.typo = 1;
                     } 
@@ -296,7 +292,7 @@ control MyIngress(inout headers hdr,
                 }
 
                 // 记录发包
-                if(hdr.seadp.packet_number & 0b00111 == 0 && meta.drop == 0){
+                if(meta.drop == 0){
                     bit<32> index;
                     index_register.read(index, 0);
                     bit<32> cur;
@@ -315,7 +311,7 @@ control MyIngress(inout headers hdr,
                 }
 
                 // 检测丢包  8*16
-                if(hdr.seadp.packet_number & 0b001111111 == 0){
+                if(meta.drop == 0){
                     bit<32> max_recv;
                     max_recv_register.read(max_recv, 0);
                     if(max_recv > 10){
@@ -336,6 +332,8 @@ control MyIngress(inout headers hdr,
                             }
                         }
                         i = i - 1;
+                        
+                        records.read(cur, i);
                         if(cur != 0){
                             typomap.read(check_typo, i);
                             if(check_typo == 1){
@@ -346,16 +344,9 @@ control MyIngress(inout headers hdr,
                             }
                         }
                         i = i - 1;
+                        
+                        records.read(cur, i);
                         if(cur != 0){
-                        typomap.read(check_typo, i);
-                        if(check_typo == 1){
-                            loss1 = loss1 + 1;
-                        }
-                        else if(check_typo == 2){
-                            loss2 = loss2 + 1;
-                        }
-                        }
-                        i = i - 1;if(cur != 0){
                             typomap.read(check_typo, i);
                             if(check_typo == 1){
                                 loss1 = loss1 + 1;
@@ -364,7 +355,10 @@ control MyIngress(inout headers hdr,
                                 loss2 = loss2 + 1;
                             }
                         }
-                        i = i - 1;if(cur != 0){
+                        i = i - 1;
+                        
+                        records.read(cur, i);
+                        if(cur != 0){
                             typomap.read(check_typo, i);
                             if(check_typo == 1){
                                 loss1 = loss1 + 1;
@@ -373,7 +367,10 @@ control MyIngress(inout headers hdr,
                                 loss2 = loss2 + 1;
                             }
                         }
-                        i = i - 1;if(cur != 0){
+                        i = i - 1;
+                        
+                        records.read(cur, i);
+                        if(cur != 0){
                             typomap.read(check_typo, i);
                             if(check_typo == 1){
                                 loss1 = loss1 + 1;
@@ -382,7 +379,10 @@ control MyIngress(inout headers hdr,
                                 loss2 = loss2 + 1;
                             }
                         }
-                        i = i - 1;if(cur != 0){
+                        i = i - 1;
+                        
+                        records.read(cur, i);
+                        if(cur != 0){
                             typomap.read(check_typo, i);
                             if(check_typo == 1){
                                 loss1 = loss1 + 1;
@@ -391,7 +391,10 @@ control MyIngress(inout headers hdr,
                                 loss2 = loss2 + 1;
                             }
                         }
-                        i = i - 1;if(cur != 0){
+                        i = i - 1;
+                        
+                        records.read(cur, i);
+                        if(cur != 0){
                             typomap.read(check_typo, i);
                             if(check_typo == 1){
                                 loss1 = loss1 + 1;
@@ -400,7 +403,10 @@ control MyIngress(inout headers hdr,
                                 loss2 = loss2 + 1;
                             }
                         }
-                        i = i - 1;if(cur != 0){
+                        i = i - 1;
+                        
+                        records.read(cur, i);
+                        if(cur != 0){
                             typomap.read(check_typo, i);
                             if(check_typo == 1){
                                 loss1 = loss1 + 1;
@@ -409,7 +415,10 @@ control MyIngress(inout headers hdr,
                                 loss2 = loss2 + 1;
                             }
                         }
-                        i = i - 1;if(cur != 0){
+                        i = i - 1;
+                        
+                        records.read(cur, i);
+                        if(cur != 0){
                             typomap.read(check_typo, i);
                             if(check_typo == 1){
                                 loss1 = loss1 + 1;
@@ -418,7 +427,19 @@ control MyIngress(inout headers hdr,
                                 loss2 = loss2 + 1;
                             }
                         }
-
+                        i = i - 1;
+                        
+                        records.read(cur, i);
+                        if(cur != 0){
+                            typomap.read(check_typo, i);
+                            if(check_typo == 1){
+                                loss1 = loss1 + 1;
+                            }
+                            else if(check_typo == 2){
+                                loss2 = loss2 + 1;
+                            }
+                        }
+                        
                         bit<32> loss1_rate = loss1 * 10;
                         loss1_register.write(0, loss1_rate);
                         bit<32> loss2_rate = loss2 * 10;
@@ -426,7 +447,7 @@ control MyIngress(inout headers hdr,
                     }
                 }
                 // 包复制
-                if(hdr.seadp.packet_number & 0b00111 == 0 && hdr.seadp.rs_ip != 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF && meta.drop == 0){
+                if(meta.drop == 0){
                     clone(CloneType.I2E, 250);
                 }
             }
