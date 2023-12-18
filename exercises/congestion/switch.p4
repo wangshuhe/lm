@@ -180,7 +180,12 @@ control MyIngress(inout headers hdr,
         standard_metadata.egress_spec = port;
         hdr.ipv6.dstAddr = ip;
         hdr.ipv6.hopLimit = hdr.ipv6.hopLimit - 1;
-        hdr.idp.srvType = meta.typo;
+        if(meta.typo == 1){
+            hdr.idp.srvType = 1;
+        }
+        if(meta.typo == 2){
+            hdr.idp.srvType = 2;
+        }
         hdr.seadp.rs_ip = cur_ip;
     }
 
@@ -203,15 +208,8 @@ control MyIngress(inout headers hdr,
         standard_metadata.egress_spec = port;
         hdr.ipv6.hopLimit = hdr.ipv6.hopLimit - 1;
         meta.router = 1;
-        if(drops == 1){
-            bit<32> choose;
-            hash(choose,HashAlgorithm.crc32,MIN_VALUE,
-            {hdr.idp.dstSeaid,
-            hdr.seadp.packet_number },
-            MAX_VALUE);
-            if(choose < 25){
-                drop();
-            }
+        if(drops == 1 && hdr.seadp.packet_number & 0x011111 == 0){
+            drop();
         }
     }
 
@@ -265,8 +263,8 @@ control MyIngress(inout headers hdr,
                     // 选择拓扑
                     bit<32> loss1;
                     bit<32> loss2;
-                    loss1_register(loss1, 0);
-                    loss2_register(loss2, 0);
+                    loss1_register.read(loss1, 0);
+                    loss2_register.read(loss2, 0);
                     bit<32> offset;
                     offset = 50 + loss2 - loss1;
                     if(meta.typo_select < offset ){
