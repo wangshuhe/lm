@@ -280,7 +280,7 @@ control MyIngress(inout headers hdr,
                     loss1_register.read(loss1, 0);
                     loss2_register.read(loss2, 0);
                     bit<32> offset;
-                    offset = 50 + loss2 + loss2 -loss1 - loss1;
+                    offset = 50 + loss2 + loss2 - loss1 - loss1;
                     if(meta.typo_select < offset ){
                         meta.typo = 1;
                     } 
