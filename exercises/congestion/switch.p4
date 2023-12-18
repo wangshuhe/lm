@@ -162,9 +162,11 @@ control MyIngress(inout headers hdr,
 
     register <bit<32>>(MAX_RECORD) records;
     register <bit<32>>(MAX_RECORD) map;
+    register <bit<32>>(MAX_RECORD) typomap;
     register <bit<32>> (1) index_register;
     register <bit<32>> (1) max_recv_register;
-    register <bit<32>> (1) loss_register;
+    register <bit<32>> (1) loss1_register;
+    register <bit<32>> (1) loss2_register;
 
     action drop() {
         mark_to_drop(standard_metadata);
@@ -250,7 +252,13 @@ control MyIngress(inout headers hdr,
                     hdr.seadp.packet_number },
                     RANGE_MAX);
                     // 选择拓扑
-                    if(meta.typo_select < 50){
+                    bit<32> loss1;
+                    bit<32> loss2;
+                    loss1.register(loss1, 0);
+                    loss2_register(loss2, 0);
+                    bit<32> offset;
+                    offset = 50 + loss2 - loss1;
+                    if(meta.typo_select < offset ){
                         meta.typo = 1;
                     } 
                     else{
@@ -261,7 +269,7 @@ control MyIngress(inout headers hdr,
                 }
 
                 // 记录发包
-                if(hdr.seadp.packet_number & 0b00111 == 0 && meta.drop == 0){
+                if(meta.typo == 1 && hdr.seadp.packet_number & 0b00111 == 0 && meta.drop == 0){
                     bit<32> index;
                     index_register.read(index, 0);
                     bit<32> cur;
@@ -271,122 +279,122 @@ control MyIngress(inout headers hdr,
                     hdr.seadp.packet_number },
                     MAX_VALUE);
                     records.write(index, cur);
+                    bit<32> cur_typo;
+                    cur_typo = meta.typo;
+                    typomap.write(index,cur_typo);
                     map.write(cur, index);
                     index = index + 1;
                     index_register.write(0, index);
                 }
 
                 // 检测丢包  8*16
-                if(hdr.seadp.packet_number & 0b001111111 == 0 && meta.drop == 0){
+                if(meta.typo == 1 && hdr.seadp.packet_number & 0b001111111 == 0 && meta.drop == 0){
                     bit<32> max_recv;
                     max_recv_register.read(max_recv, 0);
-                    if(max_recv > 20){
-                        bit<32> loss = 0;
-                        bit<32> i = max_recv;
+                    if(max_recv > 10){
+                        bit<32> loss1 = 0;
+                        bit<32> loss2 = 0;
+                        bit<32> i = max_recv - 1;
                         bit<32> cur;
+                        bit<32> check_typo;
 
                         records.read(cur, i);
                         if(cur != 0){
-                            loss = loss + 1;
+                            typomap.read(check_typo, i);
+                            if(check_typo == 1){
+                                loss1 = loss1 + 1;
+                            }
+                            else if(check_typo == 2){
+                                loss2 = loss2 + 1;
+                            }
                         }
                         i = i - 1;
-                        records.read(cur, i);
                         if(cur != 0){
-                            loss = loss + 1;
+                            typomap.read(check_typo, i);
+                            if(check_typo == 1){
+                                loss1 = loss1 + 1;
+                            }
+                            else if(check_typo == 2){
+                                loss2 = loss2 + 1;
+                            }
                         }
-                        i = i - 1;
-                        records.read(cur, i);
-                        if(cur != 0){
-                            loss = loss + 1;
+                        i = i - 1;if(cur != 0){
+                            typomap.read(check_typo, i);
+                            if(check_typo == 1){
+                                loss1 = loss1 + 1;
+                            }
+                            else if(check_typo == 2){
+                                loss2 = loss2 + 1;
+                            }
                         }
-                        i = i - 1;
-                        records.read(cur, i);
-                        if(cur != 0){
-                            loss = loss + 1;
+                        i = i - 1;if(cur != 0){
+                            typomap.read(check_typo, i);
+                            if(check_typo == 1){
+                                loss1 = loss1 + 1;
+                            }
+                            else if(check_typo == 2){
+                                loss2 = loss2 + 1;
+                            }
                         }
-                        i = i - 1;
-                        records.read(cur, i);
-                        if(cur != 0){
-                            loss = loss + 1;
+                        i = i - 1;if(cur != 0){
+                            typomap.read(check_typo, i);
+                            if(check_typo == 1){
+                                loss1 = loss1 + 1;
+                            }
+                            else if(check_typo == 2){
+                                loss2 = loss2 + 1;
+                            }
                         }
-                        i = i - 1;
-                        records.read(cur, i);
-                        if(cur != 0){
-                            loss = loss + 1;
+                        i = i - 1;if(cur != 0){
+                            typomap.read(check_typo, i);
+                            if(check_typo == 1){
+                                loss1 = loss1 + 1;
+                            }
+                            else if(check_typo == 2){
+                                loss2 = loss2 + 1;
+                            }
                         }
-                        i = i - 1;
-                        records.read(cur, i);
-                        if(cur != 0){
-                            loss = loss + 1;
+                        i = i - 1;if(cur != 0){
+                            typomap.read(check_typo, i);
+                            if(check_typo == 1){
+                                loss1 = loss1 + 1;
+                            }
+                            else if(check_typo == 2){
+                                loss2 = loss2 + 1;
+                            }
                         }
-                        i = i - 1;
-                        records.read(cur, i);
-                        if(cur != 0){
-                            loss = loss + 1;
+                        i = i - 1;if(cur != 0){
+                            typomap.read(check_typo, i);
+                            if(check_typo == 1){
+                                loss1 = loss1 + 1;
+                            }
+                            else if(check_typo == 2){
+                                loss2 = loss2 + 1;
+                            }
                         }
-                        i = i - 1;
-                        records.read(cur, i);
-                        if(cur != 0){
-                            loss = loss + 1;
+                        i = i - 1;if(cur != 0){
+                            typomap.read(check_typo, i);
+                            if(check_typo == 1){
+                                loss1 = loss1 + 1;
+                            }
+                            else if(check_typo == 2){
+                                loss2 = loss2 + 1;
+                            }
                         }
-                        i = i - 1;
-                        records.read(cur, i);
-                        if(cur != 0){
-                            loss = loss + 1;
+                        i = i - 1;if(cur != 0){
+                            typomap.read(check_typo, i);
+                            if(check_typo == 1){
+                                loss1 = loss1 + 1;
+                            }
+                            else if(check_typo == 2){
+                                loss2 = loss2 + 1;
+                            }
                         }
-                        i = i - 1;
-                        records.read(cur, i);
-                        if(cur != 0){
-                            loss = loss + 1;
-                        }
-                        i = i - 1;
-                        records.read(cur, i);
-                        if(cur != 0){
-                            loss = loss + 1;
-                        }
-                        i = i - 1;
-                        records.read(cur, i);
-                        if(cur != 0){
-                            loss = loss + 1;
-                        }
-                        i = i - 1;
-                        records.read(cur, i);
-                        if(cur != 0){
-                            loss = loss + 1;
-                        }
-                        i = i - 1;
-                        records.read(cur, i);
-                        if(cur != 0){
-                            loss = loss + 1;
-                        }
-                        i = i - 1;
-                        records.read(cur, i);
-                        if(cur != 0){
-                            loss = loss + 1;
-                        }
-                        i = i - 1;
-                        records.read(cur, i);
-                        if(cur != 0){
-                            loss = loss + 1;
-                        }
-                        i = i - 1;
-                        records.read(cur, i);
-                        if(cur != 0){
-                            loss = loss + 1;
-                        }
-                        i = i - 1;
-                        records.read(cur, i);
-                        if(cur != 0){
-                            loss = loss + 1;
-                        }
-                        i = i - 1;
-                        records.read(cur, i);
-                        if(cur != 0){
-                            loss = loss + 1;
-                        }
-                        
-                        bit<32> loss_rate = loss * 5;
-                        loss_register.write(0, loss_rate);
+
+                        bit<32> loss1_rate = loss1 * 10;
+                        loss_register1.write(0, loss1_rate);
+                        bit<32> loss2_rate = loss2 * 10;
+                        loss_register2.write(0, loss2_rate);
                     }
                 }
                 // 包复制
