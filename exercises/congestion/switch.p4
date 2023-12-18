@@ -79,7 +79,8 @@ header seadp_data_t{
 
 struct metadata {
     bit<32>   typo_select;
-    bit<32>    typo;
+    bit<32>   link_drop;
+    bit<32>   typo;
     bit<1>    router;
     bit<1>    drop;
 }
@@ -168,6 +169,7 @@ control MyIngress(inout headers hdr,
     register <bit<32>> (1) max_recv_register;
     register <bit<32>> (1) loss1_register;
     register <bit<32>> (1) loss2_register;
+    register <bit<32>> (1) loss_count;
 
     action drop() {
         mark_to_drop(standard_metadata);
@@ -202,15 +204,31 @@ control MyIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    action ipv6_forward(macAddr_t dstAddr, egressSpec_t port, drop_t drops) {
+    action ipv6_forward(macAddr_t dstAddr, egressSpec_t port) {
         hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
         hdr.ethernet.dstAddr = dstAddr;
         standard_metadata.egress_spec = port;
         hdr.ipv6.hopLimit = hdr.ipv6.hopLimit - 1;
         meta.router = 1;
-        if(drops == 1 && hdr.seadp.packet_number & 0x011111 == 0){
-            drop();
+        bit<32> num;
+        loss_count.read(num, 0);
+        if(hdr.seadp.isValid() && hdr.seadp.rs_ip != 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF){    
+            if(num == 3){
+                meta.link_drop = 1;
+            }
+            num = num + 1;
+            if(num == 4){
+                num = 0;
+            }
         }
+        loss_count.write(0, num);
+    }
+
+    table drop_exact {
+        key = {meta.link_drop: exact;}
+        actions = {drop; NoAction;}
+        size = 2;
+        default_action = NoAction();
     }
 
     table ipv6_exact {
@@ -228,7 +246,7 @@ control MyIngress(inout headers hdr,
 
     apply {
         ipv6_exact.apply();
-
+        drop_exact.apply();
         if(meta.router == 0){
             if (hdr.idp.isValid() && hdr.seadp.isValid()) {
                 
@@ -278,7 +296,7 @@ control MyIngress(inout headers hdr,
                 }
 
                 // 记录发包
-                if(meta.typo == 1 && hdr.seadp.packet_number & 0b00111 == 0 && meta.drop == 0){
+                if(hdr.seadp.packet_number & 0b00111 == 0 && meta.drop == 0){
                     bit<32> index;
                     index_register.read(index, 0);
                     bit<32> cur;
@@ -297,7 +315,7 @@ control MyIngress(inout headers hdr,
                 }
 
                 // 检测丢包  8*16
-                if(meta.typo == 1 && hdr.seadp.packet_number & 0b001111111 == 0 && meta.drop == 0){
+                if(hdr.seadp.packet_number & 0b001111111 == 0){
                     bit<32> max_recv;
                     max_recv_register.read(max_recv, 0);
                     if(max_recv > 10){
@@ -327,14 +345,15 @@ control MyIngress(inout headers hdr,
                                 loss2 = loss2 + 1;
                             }
                         }
-                        i = i - 1;if(cur != 0){
-                            typomap.read(check_typo, i);
-                            if(check_typo == 1){
-                                loss1 = loss1 + 1;
-                            }
-                            else if(check_typo == 2){
-                                loss2 = loss2 + 1;
-                            }
+                        i = i - 1;
+                        if(cur != 0){
+                        typomap.read(check_typo, i);
+                        if(check_typo == 1){
+                            loss1 = loss1 + 1;
+                        }
+                        else if(check_typo == 2){
+                            loss2 = loss2 + 1;
+                        }
                         }
                         i = i - 1;if(cur != 0){
                             typomap.read(check_typo, i);

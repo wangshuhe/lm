@@ -4,6 +4,12 @@
   "bmv2_json": "build/switch.json",
   "table_entries": [
     {
+      "table": "MyIngress.drop_exact",
+      "match": {"meta.link_drop":1},
+      "action_name": "MyIngress.drop",
+      "action_params": {}
+    },
+    {
       "table": "MyIngress.ipv6_exact",
       "match": {
         "hdr.ipv6.dstAddr": ["1000:0:0:0:0:0:0:3"]
@@ -11,8 +17,7 @@
       "action_name": "MyIngress.ipv6_forward",
       "action_params": {
         "dstAddr": "08:00:00:00:03:00",
-        "port": 2,
-        "drops": 1
+        "port": 2
       }
     },
     {
@@ -23,8 +28,7 @@
       "action_name": "MyIngress.ipv6_forward",
       "action_params": {
         "dstAddr": "08:00:00:00:01:00",
-        "port": 1,
-        "drops": 0
+        "port": 1
       }
     }
   ]
