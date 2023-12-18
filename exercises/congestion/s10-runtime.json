@@ -11,7 +11,8 @@
       "action_name": "MyIngress.ipv6_forward",
       "action_params": {
         "dstAddr": "08:00:00:00:04:00",
-        "port": 2
+        "port": 2,
+        "drop": 1
       }
     },
     {
@@ -22,7 +23,8 @@
       "action_name": "MyIngress.ipv6_forward",
       "action_params": {
         "dstAddr": "08:00:00:00:02:00",
-        "port": 1
+        "port": 1,
+        "drop": 0
       }
     }
   ]

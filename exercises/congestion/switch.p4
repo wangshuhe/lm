@@ -27,6 +27,7 @@ struct record {
 typedef bit<9>  egressSpec_t;
 typedef bit<48> macAddr_t;
 typedef bit<128> ip6Addr_t;
+typedef bit<1>  drop_t;
 
 header ethernet_t {
     macAddr_t dstAddr;
@@ -196,12 +197,22 @@ control MyIngress(inout headers hdr,
         default_action = NoAction();
     }
 
-    action ipv6_forward(macAddr_t dstAddr, egressSpec_t port) {
+    action ipv6_forward(macAddr_t dstAddr, egressSpec_t port, drop_t drop) {
         hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
         hdr.ethernet.dstAddr = dstAddr;
         standard_metadata.egress_spec = port;
         hdr.ipv6.hopLimit = hdr.ipv6.hopLimit - 1;
         meta.router = 1;
+        if(drop == 1){
+            bit<32> choose;
+            hash(choose,HashAlgorithm.crc32,MIN_VALUE,
+            {hdr.idp.dstSeaid,
+            hdr.seadp.packet_number },
+            MAX_VALUE);
+            if(choose < 25){
+                drop();
+            }
+        }
     }
 
     table ipv6_exact {
