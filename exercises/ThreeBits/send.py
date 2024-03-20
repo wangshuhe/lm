@@ -3,7 +3,7 @@ import argparse
 import random
 import socket
 
-from scapy.all import IPv6, TCP, Ether, get_if_hwaddr, get_if_list, sendp
+from scapy.all import IPv6, TCP, Ether, get_if_hwaddr, get_if_list, sendp, Raw
 from bits import Bits
 
 def get_if():
@@ -22,11 +22,9 @@ def main():
 
     iface = get_if()
 
-    numbers = [9, 73, 201, 457, 969, 1225, 1463]
 
-    for number in numbers:
-        pkt = Ether() / IPv6(dst='1000::2:2') / Bits() / Raw(b'\x00' * 9)
-        for _ in range(100):
+    pkt = Ether() / IPv6(dst='1000::2:2') / Bits() / Raw(b'\x00' * 969)
+    for _ in range(100):
         sendp(pkt, iface=iface, verbose=False)
 
 

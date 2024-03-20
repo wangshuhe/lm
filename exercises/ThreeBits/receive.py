@@ -3,6 +3,7 @@ import os
 import sys
 
 from scapy.all import TCP, get_if_list, sniff
+from bits import Bits
 
 total = 0
 
@@ -20,9 +21,10 @@ def get_if():
 
 def handle_pkt(pkt):
     global total
-    total = total + 1
-    print("total: ",  total)
-    sys.stdout.flush()
+    if len(pkt) == 1024:
+        total = total + 1
+        print("total: ",  total)
+        sys.stdout.flush()
 
 
 def main():

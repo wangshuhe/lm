@@ -61,17 +61,14 @@ header bits_t{
     bit<1>    delay;
     bit<1>    loss;
     bit<1>    notification;
+    bit<5>    padding;
 }
 
-/*
+
 struct metadata {
-    bit<32>   typo_select;
-    bit<32>   link_drop;
-    bit<32>   typo;
-    bit<1>    router;
-    bit<1>    drop;
+
 }
-*/
+
 
 struct headers {
     ethernet_t   ethernet;
@@ -214,7 +211,7 @@ control MyIngress(inout headers hdr,
         default_action = NoAction();
     }
     */
-    action ipv6_forward(egressSpec_t port) {
+    action ipv6_forward(bit<9> port) {
         standard_metadata.egress_spec = port;
         }
 
@@ -224,7 +221,6 @@ control MyIngress(inout headers hdr,
         }
         actions = {
             ipv6_forward;
-            drop;
             NoAction;
         }
         size = 1024;
@@ -279,7 +275,7 @@ control MyEgress(inout headers hdr,
                 t_ds_register.write(1, cur_time);
             }
             if(standard_metadata.ingress_port == 2){
-                port_delay.write(2, 1);
+                flag_ds_register.write(2, 1);
                 time_t t_ds;
                 t_ds_register.read(t_ds, 2);
                 time_t cur_time = standard_metadata.egress_global_timestamp;
@@ -287,7 +283,7 @@ control MyEgress(inout headers hdr,
                     time_t roundtrip_delay = cur_time - t_ds; 
                     roundtrip_delay_register.write(2, roundtrip_delay);
                 }
-                t_ds.write(2, cur_time);
+                t_ds_register.write(2, cur_time);
             }
             hdr.bits.delay = 0;
         }
@@ -310,9 +306,7 @@ control MyDeparser(packet_out packet, in headers hdr) {
     apply {
         packet.emit(hdr.ethernet);
         packet.emit(hdr.ipv6);
-        packet.emit(hdr.idp);
-        packet.emit(hdr.common);
-        packet.emit(hdr.seadp);
+        packet.emit(hdr.bits);
     }
 }
 
