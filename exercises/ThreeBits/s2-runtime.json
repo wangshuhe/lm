@@ -22,6 +22,26 @@
       "action_params": {
         "port": 2
       }
+    },
+    {
+      "table": "MyIngress.ipv6_exact",
+      "match": {
+        "hdr.ipv6.dstAddr": "1000:0:0:0:0:0:2:3"
+      },
+      "action_name": "MyIngress.ipv6_forward",
+      "action_params": {
+        "port": 3
+      }
+    },
+    {
+      "table": "MyIngress.ipv6_exact",
+      "match": {
+        "hdr.ipv6.dstAddr": "1000:0:0:0:0:0:2:4"
+      },
+      "action_name": "MyIngress.ipv6_forward",
+      "action_params": {
+        "port": 1
+      }
     }
   ]
 }
