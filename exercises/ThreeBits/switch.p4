@@ -12,6 +12,9 @@ const bit<5>  TYPE_TO512 = 0x04;
 const bit<5>  TYPE_TO1024 = 0x05;
 const bit<5>  TYPE_TO1280 = 0x06;
 const bit<5>  TYPE_TO1518 = 0x07;
+
+const bit<32> MIN_VALUE = 0x0;
+const bit<32> MAX_VALUE = 10000;
 /*
 const bit<8>  TYPE_SEADP = 0x01;
 const bit<8>  TYPE_SEADP_DATA = 0x00;
@@ -69,6 +72,7 @@ struct metadata {
     bit<1>    generate;
     bit<9>    out_port;
     bit<10>   time;
+    bit<16>   delay_select;
 }
 
 
@@ -256,12 +260,21 @@ control MyIngress(inout headers hdr,
         generate_exact.apply();
         meta.time = 0;
         time_t cur = standard_metadata.ingress_global_timestamp;
-        if(meta.generate == 1 && cur > 50000000 && cur < 60000000){
+        hash(meta.delay_select, HashAlgorithm.crc32, MIN_VALUE, {cur}, MAX_VALUE);
+        if(meta.generate == 1 && meta.delay_select < 3333){
             meta.time = 1;
         }
-        if(meta.generate == 1 && cur > 60000000 && cur < 70000000){
+        if(meta.generate == 1 && meta.delay_select > 6666){
             meta.time = 2;
         }
+        /*
+        if(meta.generate == 1 && meta.delay_select > 6700){
+            meta.time = 1;
+        }
+        if(meta.generate == 1 && meta.delay_select < 3400){
+            meta.time = 2;
+        }
+        */
         ipv6_exact.apply();
     }
 }
@@ -279,39 +292,40 @@ control MyEgress(inout headers hdr,
     register <time_t> (2) roundtrip_delay_register;  // 往返时延最新测量值
 
     apply { 
+        if(hdr.ipv6.dstAddr == 21267647932558653966460912964485644289 || hdr.ipv6.dstAddr == 21267647932558653966460912964485644290 || hdr.ipv6.dstAddr == 21267647932558653966460912964485644291 || hdr.ipv6.dstAddr == 21267647932558653966460912964485644292){
+            // 处理延迟样本
+            if(hdr.bits.delay == 1){
+                if(standard_metadata.ingress_port == 1 || standard_metadata.ingress_port == 4 || standard_metadata.ingress_port == 5){
+                    flag_ds_register.write(1, 1);
+                    time_t t_ds;
+                    t_ds_register.read(t_ds, 1);
+                    time_t cur_time = standard_metadata.egress_global_timestamp;
+                    if(t_ds != 0){
+                        time_t roundtrip_delay = cur_time - t_ds; 
+                        roundtrip_delay_register.write(1, roundtrip_delay);
+                    }
+                    t_ds_register.write(1, cur_time);
+                }
+                hdr.bits.delay = 0;
+            }
+            // 生成延迟样本
+            else {
+                if(meta.out_port == 1){
+                    bit<1> flag;
+                    flag_ds_register.read(flag, 1);
+                    if(flag == 1){
+                        hdr.bits.delay = 1;
+                        flag_ds_register.write(1, 0);
+                    }
+                }
+            }
 
-        // 处理延迟样本
-        if(hdr.bits.delay == 1){
-            if(standard_metadata.ingress_port == 1 || standard_metadata.ingress_port == 4 || standard_metadata.ingress_port == 5){
+            bit<1> generate;
+            generate_register.read(generate, 1);
+            if (meta.generate == 1 && generate == 0){
+                generate_register.write(1, 1);
                 flag_ds_register.write(1, 1);
-                time_t t_ds;
-                t_ds_register.read(t_ds, 1);
-                time_t cur_time = standard_metadata.egress_global_timestamp;
-                if(t_ds != 0){
-                    time_t roundtrip_delay = cur_time - t_ds; 
-                    roundtrip_delay_register.write(1, roundtrip_delay);
-                }
-                t_ds_register.write(1, cur_time);
             }
-            hdr.bits.delay = 0;
-        }
-        // 生成延迟样本
-        else {
-            if(meta.out_port == 1){
-                bit<1> flag;
-                flag_ds_register.read(flag, 1);
-                if(flag == 1){
-                    hdr.bits.delay = 1;
-                    flag_ds_register.write(1, 0);
-                }
-            }
-        }
-
-        bit<1> generate;
-        generate_register.read(generate, 1);
-        if (meta.generate == 1 && generate == 0){
-            generate_register.write(1, 1);
-            flag_ds_register.write(1, 1);
         }
     }
 }
