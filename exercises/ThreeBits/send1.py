@@ -2,6 +2,7 @@
 import argparse
 import random
 import socket
+import time
 
 from scapy.all import IPv6, TCP, Ether, get_if_hwaddr, get_if_list, sendp, Raw
 from bits import Bits
@@ -26,6 +27,8 @@ def main():
     pkt = Ether() / IPv6(dst='1000::2:2') / Bits() / Raw(b'\x00' * 969)
     for _ in range(2000):
         sendp(pkt, iface=iface, verbose=False)
+
+        time.sleep(0.1)
 
 
 if __name__ == '__main__':

@@ -6,6 +6,9 @@ from scapy.all import TCP, get_if_list, sniff
 from bits import Bits
 
 total = 0
+color = 0
+count = 0
+lens = []
 
 def get_if():
     ifs=get_if_list()
@@ -21,9 +24,19 @@ def get_if():
 
 def handle_pkt(pkt):
     global total
+    global color
+    global count
+    global lens
     if len(pkt) == 1024:
         total = total + 1
         print("total: ",  total)
+        if pkt[Bits].loss  == color:
+            count = count + 1
+        else:
+            lens.append(count)
+            count = 1
+            color = pkt[Bits].loss
+        print(lens)
         sys.stdout.flush()
 
 

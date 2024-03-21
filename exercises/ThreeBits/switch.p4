@@ -261,12 +261,14 @@ control MyIngress(inout headers hdr,
         meta.time = 0;
         time_t cur = standard_metadata.ingress_global_timestamp;
         hash(meta.delay_select, HashAlgorithm.crc32, MIN_VALUE, {cur}, MAX_VALUE);
+        /*
         if(meta.generate == 1 && meta.delay_select < 3333){
             meta.time = 1;
         }
         if(meta.generate == 1 && meta.delay_select > 6666){
             meta.time = 2;
         }
+        */
         /*
         if(meta.generate == 1 && meta.delay_select > 6700){
             meta.time = 1;
@@ -287,12 +289,117 @@ control MyEgress(inout headers hdr,
                  inout metadata meta,
                  inout standard_metadata_t standard_metadata) {
     register <bit<1>> (2) generate_register;
+    register <bit<1>> (2) init_register;
     register <bit<1>> (2) flag_ds_register; // 延迟样本标志位
     register <time_t> (2) t_ds_register;  // 上次发送延迟样本的时间
     register <time_t> (2) roundtrip_delay_register;  // 往返时延最新测量值
-
+    register <bit<1>> (2) cur_block_r;
+    register <bit<1>> (2) block_length_calculated_r;
+    register <bit<48>>(2) block_generation_count_r;
+    register <time_t> (2) block_bound_time_r;
+    register <bit<48>>(2) block_length_r;
     apply { 
         if(hdr.ipv6.dstAddr == 21267647932558653966460912964485644289 || hdr.ipv6.dstAddr == 21267647932558653966460912964485644290 || hdr.ipv6.dstAddr == 21267647932558653966460912964485644291 || hdr.ipv6.dstAddr == 21267647932558653966460912964485644292){
+            // 延迟样本初始化
+            bit<1> generate;
+            generate_register.read(generate, 1);
+            if (meta.generate == 1 && generate == 0){
+                generate_register.write(1, 1);
+                flag_ds_register.write(1, 1);
+            }
+            if(meta.out_port == 1){
+                bit<1> block_calculated;
+                block_length_calculated_r.read(block_calculated, 1);
+                if(block_calculated == 1){
+                    bit<1> cur_block;
+                    cur_block_r.read(cur_block, 1);
+                    hdr.bits.loss = cur_block;
+                    bit<48> block_generation_count;
+                    block_generation_count_r.read(block_generation_count, 1);
+                    block_generation_count = block_generation_count + 1;
+                    block_generation_count_r.write(1, block_generation_count);
+                    bit<48> block_length;
+                    block_length_r.read(block_length, 1);
+                    if(block_generation_count == block_length){
+                        cur_block = 1 - cur_block;
+                        cur_block_r.write(1, cur_block);
+                        block_length_calculated_r.write(1, 0);
+                        block_generation_count_r.write(1, 0);
+                        time_t cur_time = standard_metadata.egress_global_timestamp;
+                        block_bound_time_r.write(1, cur_time);
+                    }
+                }
+                else{
+                    bit<1> init;
+                    init_register.read(init, 1);
+                    if (init == 0){
+                        init_register.write(1, 1);
+                        time_t cur_time = standard_metadata.egress_global_timestamp;
+                        block_bound_time_r.write(1, cur_time);
+                    }
+                    bit<1> cur_block;
+                    cur_block_r.read(cur_block, 1);
+                    hdr.bits.loss = cur_block;
+                    bit<48> block_generation_count;
+                    block_generation_count_r.read(block_generation_count, 1);
+                    block_generation_count = block_generation_count + 1;
+                    block_generation_count_r.write(1, block_generation_count);
+                    time_t cur_time = standard_metadata.egress_global_timestamp;
+                    time_t block_bound_time;
+                    block_bound_time_r.read(block_bound_time, 1);
+                    block_bound_time = block_bound_time + 7000000;
+                    if(block_bound_time < cur_time){
+                        bit<48> len = 1;
+                        bit<1> calculated = 0;
+                        if(calculated == 0 && len < block_generation_count){
+                            len = len + len; if(len > block_generation_count) {calculated = 1; } }
+                        if(calculated == 0 && len < block_generation_count){
+                            len = len + len; if(len > block_generation_count) {calculated = 1; } }
+                        if(calculated == 0 && len < block_generation_count){
+                            len = len + len; if(len > block_generation_count) {calculated = 1; } }
+                        if(calculated == 0 && len < block_generation_count){
+                            len = len + len; if(len > block_generation_count) {calculated = 1; } }
+                        if(calculated == 0 && len < block_generation_count){
+                            len = len + len; if(len > block_generation_count) {calculated = 1; } }
+                        if(calculated == 0 && len < block_generation_count){
+                            len = len + len; if(len > block_generation_count) {calculated = 1; } }
+                        if(calculated == 0 && len < block_generation_count){
+                            len = len + len; if(len > block_generation_count) {calculated = 1; } }
+                        if(calculated == 0 && len < block_generation_count){
+                            len = len + len; if(len > block_generation_count) {calculated = 1; } }
+                        if(calculated == 0 && len < block_generation_count){
+                            len = len + len; if(len > block_generation_count) {calculated = 1; } }
+                        if(calculated == 0 && len < block_generation_count){
+                            len = len + len; if(len > block_generation_count) {calculated = 1; } }
+                        
+                        if(calculated == 0 && len < block_generation_count){
+                            len = len + len; if(len > block_generation_count) {calculated = 1; } }
+                        if(calculated == 0 && len < block_generation_count){
+                            len = len + len; if(len > block_generation_count) {calculated = 1; } }
+                        if(calculated == 0 && len < block_generation_count){
+                            len = len + len; if(len > block_generation_count) {calculated = 1; } }
+                        if(calculated == 0 && len < block_generation_count){
+                            len = len + len; if(len > block_generation_count) {calculated = 1; } }
+                        if(calculated == 0 && len < block_generation_count){
+                            len = len + len; if(len > block_generation_count) {calculated = 1; } }
+                        if(calculated == 0 && len < block_generation_count){
+                            len = len + len; if(len > block_generation_count) {calculated = 1; } }
+                        if(calculated == 0 && len < block_generation_count){
+                            len = len + len; if(len > block_generation_count) {calculated = 1; } }
+                        if(calculated == 0 && len < block_generation_count){
+                            len = len + len; if(len > block_generation_count) {calculated = 1; } }
+                        if(calculated == 0 && len < block_generation_count){
+                            len = len + len; if(len > block_generation_count) {calculated = 1; } }
+                        if(calculated == 0 && len < block_generation_count){
+                            len = len + len; if(len > block_generation_count) {calculated = 1; } }
+
+                        block_length_r.write(1, len);
+                        block_length_calculated_r.write(1, 1);
+                    }
+                }
+            }
+            
+            
             // 处理延迟样本
             if(hdr.bits.delay == 1){
                 if(standard_metadata.ingress_port == 1 || standard_metadata.ingress_port == 4 || standard_metadata.ingress_port == 5){
@@ -319,13 +426,10 @@ control MyEgress(inout headers hdr,
                     }
                 }
             }
+            
+            // 块生成
 
-            bit<1> generate;
-            generate_register.read(generate, 1);
-            if (meta.generate == 1 && generate == 0){
-                generate_register.write(1, 1);
-                flag_ds_register.write(1, 1);
-            }
+
         }
     }
 }
