@@ -24,7 +24,7 @@ def main():
 
 
     pkt = Ether() / IPv6(dst='1000::2:2') / Bits() / Raw(b'\x00' * 969)
-    for _ in range(100):
+    for _ in range(2000):
         sendp(pkt, iface=iface, verbose=False)
 
 

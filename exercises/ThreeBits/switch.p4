@@ -67,7 +67,8 @@ header bits_t{
 
 struct metadata {
     bit<1>    generate;
-    bit<9>   out_port;
+    bit<9>    out_port;
+    bit<10>   time;
 }
 
 
@@ -214,6 +215,12 @@ control MyIngress(inout headers hdr,
     */
     action ipv6_forward(bit<9> port) {
         standard_metadata.egress_spec = port;
+        if(port == 1 && meta.time == 1){
+            standard_metadata.egress_spec = 4;
+        }
+        if(port == 1 && meta.time == 2){
+            standard_metadata.egress_spec = 5;
+        }
         meta.out_port = port;
     }
 
@@ -246,8 +253,16 @@ control MyIngress(inout headers hdr,
     }
 
     apply {
-        ipv6_exact.apply();
         generate_exact.apply();
+        meta.time = 0;
+        time_t cur = standard_metadata.ingress_global_timestamp;
+        if(meta.generate == 1 && cur > 50000000 && cur < 60000000){
+            meta.time = 1;
+        }
+        if(meta.generate == 1 && cur > 60000000 && cur < 70000000){
+            meta.time = 2;
+        }
+        ipv6_exact.apply();
     }
 }
 
@@ -267,7 +282,7 @@ control MyEgress(inout headers hdr,
 
         // 处理延迟样本
         if(hdr.bits.delay == 1){
-            if(standard_metadata.ingress_port == 1){
+            if(standard_metadata.ingress_port == 1 || standard_metadata.ingress_port == 4 || standard_metadata.ingress_port == 5){
                 flag_ds_register.write(1, 1);
                 time_t t_ds;
                 t_ds_register.read(t_ds, 1);
