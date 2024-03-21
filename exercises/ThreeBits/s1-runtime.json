@@ -42,6 +42,16 @@
       "action_params": {
         "port": 3
       }
+    },
+    {
+      "table": "MyIngress.generate_exact",
+      "match": {
+        "hdr.ipv6.version": 6
+      },
+      "action_name": "MyIngress.generate",
+      "action_params": {
+        "flag": 1
+      }
     }
   ]
 }

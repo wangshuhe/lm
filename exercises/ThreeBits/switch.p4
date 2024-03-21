@@ -66,7 +66,8 @@ header bits_t{
 
 
 struct metadata {
-
+    bit<1>    generate;
+    bit<9>   out_port;
 }
 
 
@@ -213,7 +214,8 @@ control MyIngress(inout headers hdr,
     */
     action ipv6_forward(bit<9> port) {
         standard_metadata.egress_spec = port;
-        }
+        meta.out_port = port;
+    }
 
     table ipv6_exact {
         key = {
@@ -227,8 +229,25 @@ control MyIngress(inout headers hdr,
         default_action = NoAction();
     }
 
+    action generate(bit<1> flag) {
+        meta.generate = flag;
+    }
+
+    table generate_exact {
+        key = {
+            hdr.ipv6.version: exact;
+        }
+        actions = {
+            generate;
+            NoAction;
+        }
+        size = 1024;
+        default_action = NoAction();
+    }
+
     apply {
         ipv6_exact.apply();
+        generate_exact.apply();
     }
 }
 
@@ -239,28 +258,13 @@ control MyIngress(inout headers hdr,
 control MyEgress(inout headers hdr,
                  inout metadata meta,
                  inout standard_metadata_t standard_metadata) {
+    register <bit<1>> (2) generate_register;
     register <bit<1>> (2) flag_ds_register; // 延迟样本标志位
     register <time_t> (2) t_ds_register;  // 上次发送延迟样本的时间
     register <time_t> (2) roundtrip_delay_register;  // 往返时延最新测量值
 
     apply { 
-        // 生成延迟样本
-        if(standard_metadata.egress_spec == 1){
-            bit<1> flag;
-            flag_ds_register.read(flag, 1);
-            if(flag == 1){
-                hdr.bits.delay = 1;
-                flag_ds_register.write(1, 0);
-            }
-        }
-        if(standard_metadata.egress_spec == 2){
-            bit<1> flag;
-            flag_ds_register.read(flag, 2);
-            if(flag == 1){
-                hdr.bits.delay = 1;
-                flag_ds_register.write(2, 0);
-            }
-        }
+
         // 处理延迟样本
         if(hdr.bits.delay == 1){
             if(standard_metadata.ingress_port == 1){
@@ -274,18 +278,25 @@ control MyEgress(inout headers hdr,
                 }
                 t_ds_register.write(1, cur_time);
             }
-            if(standard_metadata.ingress_port == 2){
-                flag_ds_register.write(2, 1);
-                time_t t_ds;
-                t_ds_register.read(t_ds, 2);
-                time_t cur_time = standard_metadata.egress_global_timestamp;
-                if(t_ds != 0){
-                    time_t roundtrip_delay = cur_time - t_ds; 
-                    roundtrip_delay_register.write(2, roundtrip_delay);
-                }
-                t_ds_register.write(2, cur_time);
-            }
             hdr.bits.delay = 0;
+        }
+        // 生成延迟样本
+        else {
+            if(meta.out_port == 1){
+                bit<1> flag;
+                flag_ds_register.read(flag, 1);
+                if(flag == 1){
+                    hdr.bits.delay = 1;
+                    flag_ds_register.write(1, 0);
+                }
+            }
+        }
+
+        bit<1> generate;
+        generate_register.read(generate, 1);
+        if (meta.generate == 1 && generate == 0){
+            generate_register.write(1, 1);
+            flag_ds_register.write(1, 1);
         }
     }
 }
