@@ -305,6 +305,23 @@ control MyEgress(inout headers hdr,
     register <time_t>(2) time0_r;
     register <time_t>(2) time1_r;
     register <bit<48>>(2) receive_length_r;
+
+    action drop() {
+        mark_to_drop(standard_metadata);
+    }
+
+    table drop_table {
+        key = {
+            hdr.ipv6.version: exact;
+        }
+        actions = {
+            drop;
+            NoAction;
+        }
+        size = 1024;
+        default_action = drop();
+    }
+
     apply { 
         if(hdr.ipv6.dstAddr == 21267647932558653966460912964485644289 || hdr.ipv6.dstAddr == 21267647932558653966460912964485644290 || hdr.ipv6.dstAddr == 21267647932558653966460912964485644291 || hdr.ipv6.dstAddr == 21267647932558653966460912964485644292){
             // 延迟样本初始化
@@ -485,6 +502,15 @@ control MyEgress(inout headers hdr,
                     }
                 }
             }
+            if(meta.out_port == 1 && hdr.bits.delay != 1){
+                bit<16> loss_select;
+                time_t cur = standard_metadata.ingress_global_timestamp;
+                hash(loss_select, HashAlgorithm.crc32, MIN_VALUE, {cur}, MAX_VALUE);
+                if(loss_select < 1000){
+                    drop_table.apply();
+                }
+            }
+            
             
             // 块生成
 
