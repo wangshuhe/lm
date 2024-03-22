@@ -293,11 +293,18 @@ control MyEgress(inout headers hdr,
     register <bit<1>> (2) flag_ds_register; // 延迟样本标志位
     register <time_t> (2) t_ds_register;  // 上次发送延迟样本的时间
     register <time_t> (2) roundtrip_delay_register;  // 往返时延最新测量值
+    // 用于块生成：
     register <bit<1>> (2) cur_block_r;
     register <bit<1>> (2) block_length_calculated_r;
     register <bit<48>>(2) block_generation_count_r;
     register <time_t> (2) block_bound_time_r;
     register <bit<48>>(2) block_length_r;
+    // 用于块解析：
+    register <bit<48>>(2) count0_r;
+    register <bit<48>>(2) count1_r;
+    register <time_t>(2) time0_r;
+    register <time_t>(2) time1_r;
+    register <bit<48>>(2) receive_length_r;
     apply { 
         if(hdr.ipv6.dstAddr == 21267647932558653966460912964485644289 || hdr.ipv6.dstAddr == 21267647932558653966460912964485644290 || hdr.ipv6.dstAddr == 21267647932558653966460912964485644291 || hdr.ipv6.dstAddr == 21267647932558653966460912964485644292){
             // 延迟样本初始化
@@ -307,6 +314,7 @@ control MyEgress(inout headers hdr,
                 generate_register.write(1, 1);
                 flag_ds_register.write(1, 1);
             }
+            // 块生成
             if(meta.out_port == 1){
                 bit<1> block_calculated;
                 block_length_calculated_r.read(block_calculated, 1);
@@ -396,9 +404,60 @@ control MyEgress(inout headers hdr,
                         block_length_r.write(1, len);
                         block_length_calculated_r.write(1, 1);
                     }
+                    block_generation_count_r.read(block_generation_count, 1);
+                    bit<48> block_length;
+                    block_length_r.read(block_length, 1);
+                    if(block_generation_count == block_length){
+                        cur_block = 1 - cur_block;
+                        cur_block_r.write(1, cur_block);
+                        block_length_calculated_r.write(1, 0);
+                        block_generation_count_r.write(1, 0);
+                        cur_time = standard_metadata.egress_global_timestamp;
+                        block_bound_time_r.write(1, cur_time);
+                    }
                 }
             }
-            
+            // 接收块
+            if(standard_metadata.ingress_port == 1 || standard_metadata.ingress_port == 4 || standard_metadata.ingress_port == 5){
+                if(hdr.bits.loss == 0){
+                    bit<48> count0;
+                    count0_r.read(count0, 1);
+                    count0 = count0 + 1;
+                    count0_r.write(1, count0);
+                    time_t cur_time = standard_metadata.egress_global_timestamp;
+                    time0_r.write(1, cur_time);
+                }
+                else{
+                    bit<48> count1;
+                    count1_r.read(count1, 1);
+                    count1 = count1 + 1;
+                    count1_r.write(1, count1);
+                    time_t cur_time = standard_metadata.egress_global_timestamp;
+                    time1_r.write(1, cur_time);
+                }
+                time_t time0;
+                time0_r.read(time0, 1);
+                bit<48> count0;
+                count0_r.read(count0, 1);
+                time_t time1;
+                time1_r.read(time1, 1);
+                bit<48> count1;
+                count1_r.read(count1, 1);
+                time_t cur_time = standard_metadata.egress_global_timestamp;
+                cur_time = cur_time - 3000000;
+                if(time0 != 0 && cur_time > time0){
+                    time0_r.write(1, 0);
+                    count0_r.write(1, 0);
+                    bit<48> receive_length;
+                    receive_length_r.write(1, count0);
+                }
+                if(time1 != 0 && cur_time > time1){
+                    time1_r.write(1, 0);
+                    count1_r.write(1, 0);
+                    bit<48> receive_length;
+                    receive_length_r.write(1, count1);
+                }
+            }
             
             // 处理延迟样本
             if(hdr.bits.delay == 1){

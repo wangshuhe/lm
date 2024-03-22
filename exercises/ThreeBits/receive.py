@@ -32,6 +32,7 @@ def handle_pkt(pkt):
     global lens
     global bits
     if len(pkt) == 1024:
+        count = count + 1
         if(pkt[Bits].loss == 0):
             total0 = total0 + 1
         else:
@@ -49,7 +50,7 @@ def handle_pkt(pkt):
             bits.append(1)
         else:
             bits.append(0)
-        if(total0 > 120):
+        if(count == 1200):
             print(bits)
         sys.stdout.flush()
 
