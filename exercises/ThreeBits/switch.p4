@@ -261,14 +261,14 @@ control MyIngress(inout headers hdr,
         meta.time = 0;
         time_t cur = standard_metadata.ingress_global_timestamp;
         hash(meta.delay_select, HashAlgorithm.crc32, MIN_VALUE, {cur}, MAX_VALUE);
-        /*
+        
         if(meta.generate == 1 && meta.delay_select < 3333){
             meta.time = 1;
         }
         if(meta.generate == 1 && meta.delay_select > 6666){
             meta.time = 2;
         }
-        */
+        
         /*
         if(meta.generate == 1 && meta.delay_select > 6700){
             meta.time = 1;
