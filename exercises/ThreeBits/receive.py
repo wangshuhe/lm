@@ -7,6 +7,7 @@ from bits import Bits
 
 total0 = 0
 total1 = 0
+notifi = 0
 color = 0
 count = 0
 lens = []
@@ -31,13 +32,16 @@ def handle_pkt(pkt):
     global count
     global lens
     global bits
+    global notifi
     if len(pkt) == 1024:
         count = count + 1
         if(pkt[Bits].loss == 0):
             total0 = total0 + 1
         else:
             total1 = total1 + 1
-        print("total0: ",  total0, " total1: ", total1)
+        if(pkt[Bits].notification == 1):
+            notifi = notifi +  1
+        print("total0: ",  total0, " total1: ", total1, " notifi: ", notifi)
         """
         if pkt[Bits].loss  == color:
             count = count + 1

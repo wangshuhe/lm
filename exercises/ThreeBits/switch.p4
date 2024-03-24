@@ -305,6 +305,11 @@ control MyEgress(inout headers hdr,
     register <time_t>(2) time0_r;
     register <time_t>(2) time1_r;
     register <bit<48>>(2) receive_length_r;
+    //用于通告
+    // register <bit<48>>(2) receive_length_r;
+    register <bit<48>>(2) initial_length_r;
+    // register <bit<48>>(2) block_generation_count_r;
+    register <bit<48>>(2) cur_notification0_r;
 
     action drop() {
         mark_to_drop(standard_metadata);
@@ -343,6 +348,162 @@ control MyEgress(inout headers hdr,
                     block_generation_count_r.read(block_generation_count, 1);
                     block_generation_count = block_generation_count + 1;
                     block_generation_count_r.write(1, block_generation_count);
+                    /*
+                    通告    // register <bit<48>>(2) receive_length_r;
+                            register <bit<48>>(2) initial_length_r;
+                            // register <bit<48>>(2) block_generation_count_r;
+                            register <bit<48>>(2) cur_notification0_r;
+                    */
+                    bit<48> initial_length;
+                    initial_length_r.read(initial_length, 1);
+                    if(initial_length != 0){
+                        bit<48> receive_length;
+                        receive_length_r.read(receive_length, 1);
+                        bit<48> block_generation_count;
+                        block_generation_count_r.read(block_generation_count, 1);
+                        bit<48> cur_notification0;
+                        cur_notification0_r.read(cur_notification0, 1);
+
+                        bit<48> receive_length_block_generation_count;
+                        bit<48> plus; 
+                        receive_length_block_generation_count = 0;
+                        if((receive_length) & 1 == 1){
+                            plus = (block_generation_count); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 1) & 1 == 1){
+                            plus = (block_generation_count << 1); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 2) & 1 == 1){
+                            plus = (block_generation_count << 2); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 3) & 1 == 1){
+                            plus = (block_generation_count << 3); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 4) & 1 == 1){
+                            plus = (block_generation_count << 4); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 5) & 1 == 1){
+                            plus = (block_generation_count << 5); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 6) & 1 == 1){
+                            plus = (block_generation_count << 6); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 7) & 1 == 1){
+                            plus = (block_generation_count << 7); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 8) & 1 == 1){
+                            plus = (block_generation_count << 8); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 9) & 1 == 1){
+                            plus = (block_generation_count << 9); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        
+                        if((receive_length >> 10) & 1 == 1){
+                            plus = (block_generation_count << 10); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 11) & 1 == 1){
+                            plus = (block_generation_count << 11); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 12) & 1 == 1){
+                            plus = (block_generation_count << 12); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 13) & 1 == 1){
+                            plus = (block_generation_count << 13); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 14) & 1 == 1){
+                            plus = (block_generation_count << 14); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 15) & 1 == 1){
+                            plus = (block_generation_count << 15); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 16) & 1 == 1){
+                            plus = (block_generation_count << 16); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 17) & 1 == 1){
+                            plus = (block_generation_count << 17); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 18) & 1 == 1){
+                            plus = (block_generation_count << 18); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 19) & 1 == 1){
+                            plus = (block_generation_count << 19); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        
+                        bit<48> initial_length_cur_notificatin0;
+                        initial_length_cur_notificatin0 = 0;
+                        if((initial_length) & 1 == 1){
+                            plus = (cur_notification0); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 1) & 1 == 1){
+                            plus = (cur_notification0 << 1); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 2) & 1 == 1){
+                            plus = (cur_notification0 << 2); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 3) & 1 == 1){
+                            plus = (cur_notification0 << 3); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 4) & 1 == 1){
+                            plus = (cur_notification0 << 4); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 5) & 1 == 1){
+                            plus = (cur_notification0 << 5); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 6) & 1 == 1){
+                            plus = (cur_notification0 << 6); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 7) & 1 == 1){
+                            plus = (cur_notification0 << 7); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 8) & 1 == 1){
+                            plus = (cur_notification0 << 8); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 9) & 1 == 1){
+                            plus = (cur_notification0 << 9); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        
+                        if((initial_length >> 10) & 1 == 1){
+                            plus = (cur_notification0 << 10); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 11) & 1 == 1){
+                            plus = (cur_notification0 << 11); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 12) & 1 == 1){
+                            plus = (cur_notification0 << 12); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 13) & 1 == 1){
+                            plus = (cur_notification0 << 13); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 14) & 1 == 1){
+                            plus = (cur_notification0 << 14); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 15) & 1 == 1){
+                            plus = (cur_notification0 << 15); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 16) & 1 == 1){
+                            plus = (cur_notification0 << 16); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 17) & 1 == 1){
+                            plus = (cur_notification0 << 17); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 18) & 1 == 1){
+                            plus = (cur_notification0 << 18); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 19) & 1 == 1){
+                            plus = (cur_notification0 << 19); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        
+                        bit<48> initial_length_cur_notification0plus1;
+                        initial_length_cur_notification0plus1 = initial_length_cur_notificatin0 + initial_length;
+                        bit<48> diff1;
+                        bit<48> diff2;
+                        diff1= receive_length_block_generation_count - initial_length_cur_notificatin0;
+                        if(diff1 < 0) {diff1 = - diff1;}
+                        diff2 =receive_length_block_generation_count - initial_length_cur_notification0plus1;
+                        if(diff2 < 0) {diff2 = - diff2;}
+                        if(diff1 > diff2) {hdr.bits.notification = 1; cur_notification0 = cur_notification0 + 1; cur_notification0_r.write(1, cur_notification0);}
+
+                    }
                     bit<48> block_length;
                     block_length_r.read(block_length, 1);
                     if(block_generation_count == block_length){
@@ -350,6 +511,7 @@ control MyEgress(inout headers hdr,
                         cur_block_r.write(1, cur_block);
                         block_length_calculated_r.write(1, 0);
                         block_generation_count_r.write(1, 0);
+                        cur_notification0_r.write(1, 0);
                         time_t cur_time = standard_metadata.egress_global_timestamp;
                         block_bound_time_r.write(1, cur_time);
                     }
@@ -369,6 +531,164 @@ control MyEgress(inout headers hdr,
                     block_generation_count_r.read(block_generation_count, 1);
                     block_generation_count = block_generation_count + 1;
                     block_generation_count_r.write(1, block_generation_count);
+
+                    /*
+                    通告    // register <bit<48>>(2) receive_length_r;
+                            register <bit<48>>(2) initial_length_r;
+                            // register <bit<48>>(2) block_generation_count_r;
+                            register <bit<48>>(2) cur_notification0_r;
+                    */
+                    bit<48> initial_length;
+                    initial_length_r.read(initial_length, 1);
+                    if(initial_length != 0){
+                        bit<48> receive_length;
+                        receive_length_r.read(receive_length, 1);
+                        bit<48> block_generation_count;
+                        block_generation_count_r.read(block_generation_count, 1);
+                        bit<48> cur_notification0;
+                        cur_notification0_r.read(cur_notification0, 1);
+
+                        bit<48> receive_length_block_generation_count;
+                        bit<48> plus; 
+                        receive_length_block_generation_count = 0;
+                        if((receive_length) & 1 == 1){
+                            plus = (block_generation_count); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 1) & 1 == 1){
+                            plus = (block_generation_count << 1); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 2) & 1 == 1){
+                            plus = (block_generation_count << 2); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 3) & 1 == 1){
+                            plus = (block_generation_count << 3); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 4) & 1 == 1){
+                            plus = (block_generation_count << 4); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 5) & 1 == 1){
+                            plus = (block_generation_count << 5); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 6) & 1 == 1){
+                            plus = (block_generation_count << 6); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 7) & 1 == 1){
+                            plus = (block_generation_count << 7); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 8) & 1 == 1){
+                            plus = (block_generation_count << 8); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 9) & 1 == 1){
+                            plus = (block_generation_count << 9); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        
+                        if((receive_length >> 10) & 1 == 1){
+                            plus = (block_generation_count << 10); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 11) & 1 == 1){
+                            plus = (block_generation_count << 11); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 12) & 1 == 1){
+                            plus = (block_generation_count << 12); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 13) & 1 == 1){
+                            plus = (block_generation_count << 13); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 14) & 1 == 1){
+                            plus = (block_generation_count << 14); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 15) & 1 == 1){
+                            plus = (block_generation_count << 15); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 16) & 1 == 1){
+                            plus = (block_generation_count << 16); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 17) & 1 == 1){
+                            plus = (block_generation_count << 17); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 18) & 1 == 1){
+                            plus = (block_generation_count << 18); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        if((receive_length >> 19) & 1 == 1){
+                            plus = (block_generation_count << 19); receive_length_block_generation_count = receive_length_block_generation_count + plus;
+                        }
+                        
+                        bit<48> initial_length_cur_notificatin0;
+                        initial_length_cur_notificatin0 = 0;
+                        if((initial_length) & 1 == 1){
+                            plus = (cur_notification0); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 1) & 1 == 1){
+                            plus = (cur_notification0 << 1); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 2) & 1 == 1){
+                            plus = (cur_notification0 << 2); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 3) & 1 == 1){
+                            plus = (cur_notification0 << 3); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 4) & 1 == 1){
+                            plus = (cur_notification0 << 4); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 5) & 1 == 1){
+                            plus = (cur_notification0 << 5); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 6) & 1 == 1){
+                            plus = (cur_notification0 << 6); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 7) & 1 == 1){
+                            plus = (cur_notification0 << 7); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 8) & 1 == 1){
+                            plus = (cur_notification0 << 8); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 9) & 1 == 1){
+                            plus = (cur_notification0 << 9); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        
+                        if((initial_length >> 10) & 1 == 1){
+                            plus = (cur_notification0 << 10); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 11) & 1 == 1){
+                            plus = (cur_notification0 << 11); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 12) & 1 == 1){
+                            plus = (cur_notification0 << 12); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 13) & 1 == 1){
+                            plus = (cur_notification0 << 13); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 14) & 1 == 1){
+                            plus = (cur_notification0 << 14); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 15) & 1 == 1){
+                            plus = (cur_notification0 << 15); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 16) & 1 == 1){
+                            plus = (cur_notification0 << 16); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 17) & 1 == 1){
+                            plus = (cur_notification0 << 17); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 18) & 1 == 1){
+                            plus = (cur_notification0 << 18); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+                        if((initial_length >> 19) & 1 == 1){
+                            plus = (cur_notification0 << 19); initial_length_cur_notificatin0 = initial_length_cur_notificatin0 + plus;
+                        }
+
+                        bit<48> initial_length_cur_notification0plus1;
+                        initial_length_cur_notification0plus1 = initial_length_cur_notificatin0 + initial_length;
+                        bit<48> diff1;
+                        bit<48> diff2;
+                        diff1= receive_length_block_generation_count - initial_length_cur_notificatin0;
+                        if(diff1 < 0) {diff1 = - diff1;}
+                        diff2 =receive_length_block_generation_count - initial_length_cur_notification0plus1;
+                        if(diff2 < 0) {diff2 = - diff2;}
+                        if(diff1 > diff2) {hdr.bits.notification = 1; cur_notification0 = cur_notification0 + 1; cur_notification0_r.write(1, cur_notification0);}
+
+                    }
+
                     time_t cur_time = standard_metadata.egress_global_timestamp;
                     time_t block_bound_time;
                     block_bound_time_r.read(block_bound_time, 1);
@@ -467,12 +787,104 @@ control MyEgress(inout headers hdr,
                     count0_r.write(1, 0);
                     bit<48> receive_length;
                     receive_length_r.write(1, count0);
+                    
+                    bit<48> initial_length = 1;
+                    bit<1> calculated = 0;
+                    if(calculated == 0 && initial_length < count0){
+                        initial_length = initial_length + initial_length; if(initial_length > count0) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count0){
+                        initial_length = initial_length + initial_length; if(initial_length > count0) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count0){
+                        initial_length = initial_length + initial_length; if(initial_length > count0) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count0){
+                        initial_length = initial_length + initial_length; if(initial_length > count0) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count0){
+                        initial_length = initial_length + initial_length; if(initial_length > count0) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count0){
+                        initial_length = initial_length + initial_length; if(initial_length > count0) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count0){
+                        initial_length = initial_length + initial_length; if(initial_length > count0) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count0){
+                        initial_length = initial_length + initial_length; if(initial_length > count0) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count0){
+                        initial_length = initial_length + initial_length; if(initial_length > count0) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count0){
+                        initial_length = initial_length + initial_length; if(initial_length > count0) {calculated = 1; } }
+                    
+                    if(calculated == 0 && initial_length < count0){
+                        initial_length = initial_length + initial_length; if(initial_length > count0) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count0){
+                        initial_length = initial_length + initial_length; if(initial_length > count0) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count0){
+                        initial_length = initial_length + initial_length; if(initial_length > count0) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count0){
+                        initial_length = initial_length + initial_length; if(initial_length > count0) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count0){
+                        initial_length = initial_length + initial_length; if(initial_length > count0) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count0){
+                        initial_length = initial_length + initial_length; if(initial_length > count0) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count0){
+                        initial_length = initial_length + initial_length; if(initial_length > count0) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count0){
+                        initial_length = initial_length + initial_length; if(initial_length > count0) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count0){
+                        initial_length = initial_length + initial_length; if(initial_length > count0) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count0){
+                        initial_length = initial_length + initial_length; if(initial_length > count0) {calculated = 1; } }
+
+                    initial_length_r.write(1, initial_length);
                 }
                 if(time1 != 0 && cur_time > time1){
                     time1_r.write(1, 0);
                     count1_r.write(1, 0);
                     bit<48> receive_length;
                     receive_length_r.write(1, count1);
+
+                    bit<48> initial_length = 1;
+                    bit<1> calculated = 0;
+                    if(calculated == 0 && initial_length < count1){
+                        initial_length = initial_length + initial_length; if(initial_length > count1) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count1){
+                        initial_length = initial_length + initial_length; if(initial_length > count1) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count1){
+                        initial_length = initial_length + initial_length; if(initial_length > count1) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count1){
+                        initial_length = initial_length + initial_length; if(initial_length > count1) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count1){
+                        initial_length = initial_length + initial_length; if(initial_length > count1) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count1){
+                        initial_length = initial_length + initial_length; if(initial_length > count1) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count1){
+                        initial_length = initial_length + initial_length; if(initial_length > count1) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count1){
+                        initial_length = initial_length + initial_length; if(initial_length > count1) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count1){
+                        initial_length = initial_length + initial_length; if(initial_length > count1) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count1){
+                        initial_length = initial_length + initial_length; if(initial_length > count1) {calculated = 1; } }
+                    
+                    if(calculated == 0 && initial_length < count1){
+                        initial_length = initial_length + initial_length; if(initial_length > count1) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count1){
+                        initial_length = initial_length + initial_length; if(initial_length > count1) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count1){
+                        initial_length = initial_length + initial_length; if(initial_length > count1) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count1){
+                        initial_length = initial_length + initial_length; if(initial_length > count1) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count1){
+                        initial_length = initial_length + initial_length; if(initial_length > count1) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count1){
+                        initial_length = initial_length + initial_length; if(initial_length > count1) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count1){
+                        initial_length = initial_length + initial_length; if(initial_length > count1) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count1){
+                        initial_length = initial_length + initial_length; if(initial_length > count1) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count1){
+                        initial_length = initial_length + initial_length; if(initial_length > count1) {calculated = 1; } }
+                    if(calculated == 0 && initial_length < count1){
+                        initial_length = initial_length + initial_length; if(initial_length > count1) {calculated = 1; } }
+
+                    initial_length_r.write(1, initial_length);
                 }
             }
             
