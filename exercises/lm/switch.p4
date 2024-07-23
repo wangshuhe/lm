@@ -5,6 +5,7 @@
 
 const bit<16> TYPE_IPV6 = 0x86DD;
 
+typedef bit<9> egressSpec_t;
 typedef bit<48> time_t;
 typedef bit<48> macAddr_t;
 
@@ -72,7 +73,7 @@ control MyIngress(inout headers hdr,
     register <bit<24>> (2) counter0;
     register <bit<24>> (2) counter1;
     register <bit<8>> (2) laster;
-    register <timer_t> (2) timer;
+    register <time_t> (2) timer;
     register <bit<24>> (2) receive_counter;
     register <bit<24>> (2) send_counter;
     register <bit<1>> (2) time_init;
@@ -133,7 +134,7 @@ control MyIngress(inout headers hdr,
                 counter0.read(count0, 1);
                 if(count0 != 0 && diff_time > 333){
                     receive_counter.write(1, count0);
-                    send_count = 1;
+                    bit<24> send_count = 1;
                     
                     if(send_count < count0)  send_count = send_count + send_count;
                     if(send_count < count0)  send_count = send_count + send_count;
@@ -171,7 +172,7 @@ control MyIngress(inout headers hdr,
                 counter1.read(count1, 1);
                 if(count1 != 0 && diff_time > 333){
                     receive_counter.write(1, count1);
-                    send_count = 1;
+                    bit<24> send_count = 1;
                     
                     if(send_count < count1)  send_count = send_count + send_count;
                     if(send_count < count1)  send_count = send_count + send_count;
@@ -222,7 +223,7 @@ control MyEgress(inout headers hdr,
     register <bit<8>> (2) mark;
     register <bit<24>> (2) counter;
     register <bit<1>> (2) after3t;
-    register <timer_t> (2) timer;
+    register <time_t> (2) timer;
     register <bit<24>> (2) selected_counter;
     register <bit<1>> (2) time_init;
 
@@ -253,7 +254,7 @@ control MyEgress(inout headers hdr,
                     time_t cur_time = standard_metadata.egress_global_timestamp;
                     timer.write(1, cur_time);
                 }
-                timer_t pre_time;
+                time_t pre_time;
                 timer.read(pre_time, 1);
                 time_t cur_time = standard_metadata.egress_global_timestamp;
                 time_t dif_time = cur_time - pre_time;
@@ -321,7 +322,6 @@ control MyDeparser(packet_out packet, in headers hdr) {
     apply {
         packet.emit(hdr.ethernet);
         packet.emit(hdr.ipv6);
-        packet.emit(hdr.bits);
     }
 }
 
