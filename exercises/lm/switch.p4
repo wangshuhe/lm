@@ -27,10 +27,7 @@ header ipv6_t {
 }
 
 struct metadata {
-    bit<1>    generate;
     bit<9>    out_port;
-    bit<10>   time;
-    bit<16>   delay_select;
 }
 
 struct headers {
@@ -80,11 +77,12 @@ control MyIngress(inout headers hdr,
 
     action ipv6_forward(egressSpec_t port) {
         standard_metadata.egress_spec = port;
+	meta.out_port = port;
     }
 
-    table ipv6_lpm {
+    table ipv6_exact {
         key = {
-            hdr.ipv6.dstAddr: lpm;
+            hdr.ipv6.dstAddr: exact;
         }
         actions = {
             ipv6_forward;
@@ -96,9 +94,9 @@ control MyIngress(inout headers hdr,
 
     apply {
         if (hdr.ipv6.isValid()) {
-            ipv6_lpm.apply();
+            ipv6_exact.apply();
         }
-        if(hdr.ipv6.isValid() && standard_metadata.ingress_port == 1){
+        if(hdr.ipv6.isValid() && standard_metadata.ingress_port == 1 && hdr.ipv6.hopLimit == 9){
             
             bit<1> time_inited;
             time_init.read(time_inited, 1);
@@ -226,10 +224,11 @@ control MyEgress(inout headers hdr,
     register <time_t> (2) timer;
     register <bit<24>> (2) selected_counter;
     register <bit<1>> (2) time_init;
-
+    
     apply { 
-        if(hdr.ipv6.isValid() && standard_metadata.egress_spec == 1){
-
+	
+        if(hdr.ipv6.isValid() && meta.out_port == 1 && hdr.ipv6.hopLimit == 9){
+	    
             bit<1> time_inited;
             time_init.read(time_inited, 1);
             if(time_inited == 0){
@@ -261,31 +260,31 @@ control MyEgress(inout headers hdr,
                 if(dif_time > 1000){
                     bit<24> selected_count;
                     selected_count = 1;
-                    if(selected_count < count)  selected_count = selected_count + selected_count;
-                    if(selected_count < count)  selected_count = selected_count + selected_count;
-                    if(selected_count < count)  selected_count = selected_count + selected_count;
-                    if(selected_count < count)  selected_count = selected_count + selected_count;
-                    if(selected_count < count)  selected_count = selected_count + selected_count;
-                    if(selected_count < count)  selected_count = selected_count + selected_count;
-                    if(selected_count < count)  selected_count = selected_count + selected_count;
-                    if(selected_count < count)  selected_count = selected_count + selected_count;
-                    if(selected_count < count)  selected_count = selected_count + selected_count;
-                    if(selected_count < count)  selected_count = selected_count + selected_count;
+                    if(selected_count <= count)  selected_count = selected_count + selected_count;
+                    if(selected_count <= count)  selected_count = selected_count + selected_count;
+                    if(selected_count <= count)  selected_count = selected_count + selected_count;
+                    if(selected_count <= count)  selected_count = selected_count + selected_count;
+                    if(selected_count <= count)  selected_count = selected_count + selected_count;
+                    if(selected_count <= count)  selected_count = selected_count + selected_count;
+                    if(selected_count <= count)  selected_count = selected_count + selected_count;
+                    if(selected_count <= count)  selected_count = selected_count + selected_count;
+                    if(selected_count <= count)  selected_count = selected_count + selected_count;
+                    if(selected_count <= count)  selected_count = selected_count + selected_count;
                     
-                    if(selected_count < count)  selected_count = selected_count + selected_count;
-                    if(selected_count < count)  selected_count = selected_count + selected_count;
-                    if(selected_count < count)  selected_count = selected_count + selected_count;
-                    if(selected_count < count)  selected_count = selected_count + selected_count;
-                    if(selected_count < count)  selected_count = selected_count + selected_count;
-                    if(selected_count < count)  selected_count = selected_count + selected_count;
-                    if(selected_count < count)  selected_count = selected_count + selected_count;
-                    if(selected_count < count)  selected_count = selected_count + selected_count;
-                    if(selected_count < count)  selected_count = selected_count + selected_count;
-                    if(selected_count < count)  selected_count = selected_count + selected_count;
+                    if(selected_count <= count)  selected_count = selected_count + selected_count;
+                    if(selected_count <= count)  selected_count = selected_count + selected_count;
+                    if(selected_count <= count)  selected_count = selected_count + selected_count;
+                    if(selected_count <= count)  selected_count = selected_count + selected_count;
+                    if(selected_count <= count)  selected_count = selected_count + selected_count;
+                    if(selected_count <= count)  selected_count = selected_count + selected_count;
+                    if(selected_count <= count)  selected_count = selected_count + selected_count;
+                    if(selected_count <= count)  selected_count = selected_count + selected_count;
+                    if(selected_count <= count)  selected_count = selected_count + selected_count;
+                    if(selected_count <= count)  selected_count = selected_count + selected_count;
                     
-                    if(selected_count < count)  selected_count = selected_count + selected_count;
-                    if(selected_count < count)  selected_count = selected_count + selected_count;
-                    if(selected_count < count)  selected_count = selected_count + selected_count;
+                    if(selected_count <= count)  selected_count = selected_count + selected_count;
+                    if(selected_count <= count)  selected_count = selected_count + selected_count;
+                    if(selected_count <= count)  selected_count = selected_count + selected_count;
                     selected_counter.write(1, selected_count);
                     after3t.write(1, 1);
                 }

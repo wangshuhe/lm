@@ -1,10 +1,10 @@
 {
   "target": "bmv2",
-  "p4info": "build/basic.p4.p4info.txt",
-  "bmv2_json": "build/basic.json",
+  "p4info": "build/switch.p4.p4info.txt",
+  "bmv2_json": "build/switch.json",
   "table_entries": [
     {
-      "table": "MyIngress.ipv6_lpm",
+      "table": "MyIngress.ipv6_exact",
       "match": {
         "hdr.ipv6.dstAddr": "1000:0:0:0:0:0:1:1"
       },
@@ -14,7 +14,7 @@
       }
     },
     {
-      "table": "MyIngress.ipv6_lpm",
+      "table": "MyIngress.ipv6_exact",
       "match": {
         "hdr.ipv6.dstAddr": "1000:0:0:0:0:0:2:2"
       },
