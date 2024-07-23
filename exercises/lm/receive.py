@@ -4,7 +4,7 @@ import sys
 
 from scapy.all import TCP, get_if_list, sniff
 
-global count
+count = 0
 
 def get_if():
     ifs=get_if_list()

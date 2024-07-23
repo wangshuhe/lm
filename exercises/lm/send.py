@@ -23,7 +23,7 @@ def main():
     iface = get_if()
 
 
-    pkt = Ether() / IPv6(dst='1000::2:2') / Raw(b'\x00' * 969)
+    pkt = Ether() / IPv6(src = '1000::1:1', dst='1000:0:0:0:0:0:2:2') / Raw(b'\x00' * 969)
     for _ in range(12):
         sendp(pkt, iface=iface, verbose=False)
 
