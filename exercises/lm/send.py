@@ -2,9 +2,9 @@
 import argparse
 import random
 import socket
+import time
 
 from scapy.all import IPv6, TCP, Ether, get_if_hwaddr, get_if_list, sendp, Raw
-from bits import Bits
 
 def get_if():
     ifs=get_if_list()
@@ -12,7 +12,7 @@ def get_if():
     for i in get_if_list():
         if "eth0" in i:
             iface=i
-            break;
+            break
     if not iface:
         print("Cannot find eth0 interface")
         exit(1)
@@ -23,9 +23,11 @@ def main():
     iface = get_if()
 
 
-    pkt = Ether() / IPv6(dst='1000::2:4') / Bits() / Raw(b'\x00' * 969)
-    for _ in range(1200):
+    pkt = Ether() / IPv6(dst='1000::2:2') / Raw(b'\x00' * 969)
+    for _ in range(12):
         sendp(pkt, iface=iface, verbose=False)
+
+        time.sleep(0.00025)
 
 
 if __name__ == '__main__':
