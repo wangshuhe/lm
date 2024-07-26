@@ -104,7 +104,7 @@ control MyIngress(inout headers hdr,
         last_loss_reg.write(0, hdr.ipv6.loss);
     }
     action pre_time_update(){
-        pre_time_reg.write(0, standard_metadata.ingress_timestamp);
+        pre_time_reg.write(0, standard_metadata.ingress_global_timestamp);
     }
     action cal_loss(){
         bit<48> send_count = 1;
@@ -118,14 +118,14 @@ control MyIngress(inout headers hdr,
         recv_count_reg.write(0, meta.count);
     }
     action count0_update(){
-        count0.read(meta.count, standard_metadata.ingress_port);
+        count0.read(meta.count, (bit<32>)standard_metadata.ingress_port);
         meta.count = meta.count + 1;
-        count0.write(standard_metadata.ingress_port, meta.count);
+        count0.write((bit<32>)standard_metadata.ingress_port, meta.count);
     }
     action count1_update(){
-        count1.read(meta.count, standard_metadata.ingress_port);
+        count1.read(meta.count, (bit<32>)standard_metadata.ingress_port);
         meta.count = meta.count + 1;
-        count1.write(standard_metadata.ingress_port, meta.count);
+        count1.write((bit<32>)standard_metadata.ingress_port, meta.count);
     }
     table count_update{
         key = {
@@ -141,10 +141,10 @@ control MyIngress(inout headers hdr,
         }
     }
     action count0_reset(){
-        count0.write(standard_metadata.ingress_port, 0);
+        count0.write((bit<32>)standard_metadata.ingress_port, 0);
     }
     action count1_reset(){
-        count1.write(standard_metadata.ingress_port, 0);
+        count1.write((bit<32>)standard_metadata.ingress_port, 0);
     }
     table count_reset{
         key = {
@@ -155,8 +155,8 @@ control MyIngress(inout headers hdr,
             count1_reset;
         }
         const entries = {
-            BIT0 : count0_reset();
-            BIT1 : count1_reset();
+            BIT0 : count1_reset();
+            BIT1 : count0_reset();
         }
     }
     apply {
@@ -168,20 +168,21 @@ control MyIngress(inout headers hdr,
                 time_t pre_time = standard_metadata.ingress_global_timestamp;
                 pre_time_reg.write(0, pre_time);
                 time_init.write(0, 1);
+		t_reg.write(0, 333);
             }
             
             count_update.apply();
             last_loss_reg.read(meta.last_loss, 0);
             if(hdr.ipv6.loss == meta.last_loss){
                 if(hdr.ipv6.loss == 1){
-                    count0.read(meta.count, 0);
+                    count0.read(meta.count, (bit<32>)standard_metadata.ingress_port);
                 }
                 else{
-                    count1.read(meta.count, 0);
+                    count1.read(meta.count, (bit<32>)standard_metadata.ingress_port);
                 }
                 pre_time_reg.read(meta.pre_time, 0);
                 t_reg.read(meta.t, 0);
-                if(meta.count != 0 && standard_metadata.ingress_timestamp - meta.pre_time > meta.t){
+                if(meta.count != 0 && standard_metadata.ingress_global_timestamp - meta.pre_time > meta.t){
                     cal_loss();
                     count_reset.apply();
                 }
@@ -191,8 +192,10 @@ control MyIngress(inout headers hdr,
                 pre_time_update();
                 last_loss_update();
             }
-            ipv6_exact.apply();
         }
+        if(hdr.ipv6.isValid()){
+	    ipv6_exact.apply();
+	}
     }
 }
 
@@ -279,7 +282,7 @@ control MyEgress(inout headers hdr,
                 bit<24> selected_count;
                 selected_counter.read(selected_count, 1);
                 if(count == selected_count){
-                    bit<8> cur_mark;
+                    bit<1> cur_mark;
                     mark.read(cur_mark, 1);
                     cur_mark = 1 - cur_mark;
                     mark.write(1, cur_mark);
