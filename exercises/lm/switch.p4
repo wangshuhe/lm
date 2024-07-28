@@ -36,6 +36,14 @@ struct metadata {
     bit<1>    last_loss;
     time_t    pre_time;
     time_t    t;
+
+    bit<1>    mark;
+    bit<48>   count;
+    bit<1>    state;
+    time_t    pre_time;
+    time_t    time_length;
+    time_t    diff_time;
+    bit<48>   selected_count;
 }
 
 struct headers {
@@ -207,13 +215,73 @@ control MyEgress(inout headers hdr,
                  inout metadata meta,
                  inout standard_metadata_t standard_metadata) {
     
-    register <bit<1>> (2) mark;
-    register <bit<24>> (2) counter;
-    register <bit<1>> (2) after3t;
-    register <time_t> (2) timer;
-    register <bit<24>> (2) selected_counter;
-    register <bit<1>> (2) time_init;
+    register <bit<1>> (MAX_PORTS) time_init;
+
+    register <bit<1>> (MAX_PORTS) mark_reg;
+    register <bit<48>> (MAX_PORTS) counter;
+    register <bit<1>> (MAX_PORTS) state_reg;
+    register <time_t> (MAX_PORTS) pre_time_reg;
+    register <time_t> (MAX_PORTS) time_length_reg;
+    register <bit<48>> (MAX_PORTS) selected_count_reg;
+    register <bit<8>> (MAX_PORTS) packet_rate_reg;
     
+    action mark_packet(){
+        mark_reg.read(meta.mark, (bit<32>)standard_metadata.ingress_port);
+        hdr.ipv6.loss = meta.mark;
+    }
+
+    action count_update(){
+        counter.read(meta.count, (bit<32>)standard_metadata.ingress_port);
+        meta.count = meta.count + 1;
+        counter.write((bit<32>)standard_metadata.ingress_port, meta.count);
+    }
+
+    action cal_packet_rate(){
+        bit<8> packet_rate = 20;
+        if(meta.count < meta.diff_time) packet_rate = 18;
+        if((meta.count << 2) < meta.diff_time) packet_rate = 16;
+        if((meta.count << 4) < meta.diff_time) packet_rate = 14;
+        if((meta.count << 6) < meta.diff_time) packet_rate = 12;
+        if((meta.count << 8) < meta.diff_time) packet_rate = 10;
+        if((meta.count << 10) < meta.diff_time) packet_rate = 8;
+        if((meta.count << 12) < meta.diff_time) packet_rate = 6;
+        if((meta.count << 14) < meta.diff_time) packet_rate = 4;
+        if((meta.count << 16) < meta.diff_time) packet_rate = 2;
+        if((meta.count << 18) < meta.diff_time) packet_rate = 0;
+        packet_rate_reg.write((bit<32>)standard_metadata.ingress_port, packet_rate);
+    }
+    
+    action select_count(){
+        bit<8> packet_rate;
+        packet_rate_reg.read(packet_rate, (bit<32>)standard_metadata.ingress_port);
+        if(packet_rate <= 10) meta.selected_count = 2;
+        else meta.selected_count = 4;
+        if(meta.selected_count <= meta.count){
+            if(meta.selected_count <= meta.count) meta.selected_count = meta.selected_count << 1;
+            if(meta.selected_count <= meta.count) meta.selected_count = meta.selected_count << 1;
+            if(meta.selected_count <= meta.count) meta.selected_count = meta.selected_count << 1;
+            if(meta.selected_count <= meta.count) meta.selected_count = meta.selected_count << 1;
+            if(meta.selected_count <= meta.count) meta.selected_count = meta.selected_count << 1;
+            // 45
+            if(meta.selected_count <= meta.count) meta.selected_count = meta.selected_count << 1;
+        }
+        selected_count_reg.write((bit<32>)standard_metadata.ingress_port, meta.selected_count);
+    }
+
+    action switch_state(){
+        meta.state = 1 - meta.state;
+        state_reg.write((bit<32>)standard_metadata.egress_port, meta.state);
+    }
+
+    action switch_mark(){
+        meta.mark = 1 - meta.mark;
+        mark_reg.write((bit<32>)standard_metadata.egress_port, meta.mark);
+    }
+
+    action count_reset(){
+        counter.write((bit<32>)standard_metadata.egress_port, 0);
+    }
+
     apply { 
 	
         if(hdr.ipv6.isValid() && meta.out_port == 1 && hdr.ipv6.hopLimit == 9){
@@ -222,74 +290,38 @@ control MyEgress(inout headers hdr,
             time_init.read(time_inited, 1);
             if(time_inited == 0){
                 time_t cur_time = standard_metadata.egress_global_timestamp;
-                timer.write(1, cur_time);
+                pre_time_reg.write((bit<32>)standard_metadata.egress_port, cur_time);
                 time_init.write(1, 1);
+                time_t threet = 1000;
+                time_length.write((bit<32>)standard_metadata.egress_port, threet);
             }
 
-            bit<1> cur_mark;
-            mark.read(cur_mark, 1);
-            hdr.ipv6.loss= cur_mark;
-
-            bit<24> count;
-            counter.read(count, 1); count = count + 1;
-            counter.write(1, count);
-
-            bit<1> isafter3t;
-            after3t.read(isafter3t, 1);
-            if(isafter3t == 0){
-
-                if(count == 1){
-                    time_t cur_time = standard_metadata.egress_global_timestamp;
-                    timer.write(1, cur_time);
+            mark_packet();
+            count_update();
+            state_reg.read(meta.state, (bit<32>)standard_metadata.engress_port);
+            if(meta.state == 0){
+                if(meta.count == 1){
+                    meta.pre_time = standard_metadata.egress_global_timestamp;
+                    pre_time.write((bit<32>)standard_metadata.egress_port);
                 }
-                time_t pre_time;
-                timer.read(pre_time, 1);
-                time_t cur_time = standard_metadata.egress_global_timestamp;
-                time_t dif_time = cur_time - pre_time;
-                if(dif_time > 1000){
-                    bit<24> selected_count;
-                    selected_count = 1;
-                    if(selected_count <= count)  selected_count = selected_count + selected_count;
-                    if(selected_count <= count)  selected_count = selected_count + selected_count;
-                    if(selected_count <= count)  selected_count = selected_count + selected_count;
-                    if(selected_count <= count)  selected_count = selected_count + selected_count;
-                    if(selected_count <= count)  selected_count = selected_count + selected_count;
-                    if(selected_count <= count)  selected_count = selected_count + selected_count;
-                    if(selected_count <= count)  selected_count = selected_count + selected_count;
-                    if(selected_count <= count)  selected_count = selected_count + selected_count;
-                    if(selected_count <= count)  selected_count = selected_count + selected_count;
-                    if(selected_count <= count)  selected_count = selected_count + selected_count;
-                    
-                    if(selected_count <= count)  selected_count = selected_count + selected_count;
-                    if(selected_count <= count)  selected_count = selected_count + selected_count;
-                    if(selected_count <= count)  selected_count = selected_count + selected_count;
-                    if(selected_count <= count)  selected_count = selected_count + selected_count;
-                    if(selected_count <= count)  selected_count = selected_count + selected_count;
-                    if(selected_count <= count)  selected_count = selected_count + selected_count;
-                    if(selected_count <= count)  selected_count = selected_count + selected_count;
-                    if(selected_count <= count)  selected_count = selected_count + selected_count;
-                    if(selected_count <= count)  selected_count = selected_count + selected_count;
-                    if(selected_count <= count)  selected_count = selected_count + selected_count;
-                    
-                    if(selected_count <= count)  selected_count = selected_count + selected_count;
-                    if(selected_count <= count)  selected_count = selected_count + selected_count;
-                    if(selected_count <= count)  selected_count = selected_count + selected_count;
-                    selected_counter.write(1, selected_count);
-                    after3t.write(1, 1);
+                pre_time_reg.read(meta.pre_time, (bit<32>)standard_metadata.egress_port);
+                meta.diff_time = standard_metadata.egress_global_timestamp - meta.pre_time;
+                time_length_reg.read(meta.time_length, (bit<32>)standard_metadata.egress_port);
+                if(meta.diff_time > meta.time_length){
+                    cal_packet_rate();
+                    select_count();
+                    switch_state();
                 }
             }
             else{
-                bit<24> selected_count;
-                selected_counter.read(selected_count, 1);
-                if(count == selected_count){
-                    bit<1> cur_mark;
-                    mark.read(cur_mark, 1);
-                    cur_mark = 1 - cur_mark;
-                    mark.write(1, cur_mark);
-                    counter.write(1, 0);
-                    after3t.write(1, 0);
+                selected_count_reg.read((bit<32>)standard_metadata.egress_port, meta.selected_count);
+                if(meta.count == meta.selected_count){
+                    switch_mark();
+                    count_reset();
+                    switch_state();
                 }
             }
+
         }
     }
 }
