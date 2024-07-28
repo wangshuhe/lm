@@ -32,15 +32,14 @@ header ipv6_t {
 
 struct metadata {
     bit<9>    out_port;
-    bit<48>   count;
     bit<1>    last_loss;
-    time_t    pre_time;
     time_t    t;
 
-    bit<1>    mark;
     bit<48>   count;
-    bit<1>    state;
     time_t    pre_time;
+
+    bit<1>    mark;
+    bit<1>    state;
     time_t    time_length;
     time_t    diff_time;
     bit<48>   selected_count;
@@ -226,14 +225,14 @@ control MyEgress(inout headers hdr,
     register <bit<8>> (MAX_PORTS) packet_rate_reg;
     
     action mark_packet(){
-        mark_reg.read(meta.mark, (bit<32>)standard_metadata.ingress_port);
+        mark_reg.read(meta.mark, (bit<32>)standard_metadata.egress_port);
         hdr.ipv6.loss = meta.mark;
     }
 
     action count_update(){
-        counter.read(meta.count, (bit<32>)standard_metadata.ingress_port);
+        counter.read(meta.count, (bit<32>)standard_metadata.egress_port);
         meta.count = meta.count + 1;
-        counter.write((bit<32>)standard_metadata.ingress_port, meta.count);
+        counter.write((bit<32>)standard_metadata.egress_port, meta.count);
     }
 
     action cal_packet_rate(){
@@ -248,14 +247,14 @@ control MyEgress(inout headers hdr,
         if((meta.count << 14) < meta.diff_time) packet_rate = 4;
         if((meta.count << 16) < meta.diff_time) packet_rate = 2;
         if((meta.count << 18) < meta.diff_time) packet_rate = 0;
-        packet_rate_reg.write((bit<32>)standard_metadata.ingress_port, packet_rate);
+        packet_rate_reg.write((bit<32>)standard_metadata.egress_port, packet_rate);
     }
     
     action select_count(){
         bit<8> packet_rate;
-        packet_rate_reg.read(packet_rate, (bit<32>)standard_metadata.ingress_port);
-        if(packet_rate <= 10) meta.selected_count = 2;
-        else meta.selected_count = 4;
+        packet_rate_reg.read(packet_rate, (bit<32>)standard_metadata.egress_port);
+        if(packet_rate < 10) meta.selected_count = 1;
+        else meta.selected_count = 2;
         if(meta.selected_count <= meta.count){
             if(meta.selected_count <= meta.count) meta.selected_count = meta.selected_count << 1;
             if(meta.selected_count <= meta.count) meta.selected_count = meta.selected_count << 1;
@@ -265,7 +264,7 @@ control MyEgress(inout headers hdr,
             // 45
             if(meta.selected_count <= meta.count) meta.selected_count = meta.selected_count << 1;
         }
-        selected_count_reg.write((bit<32>)standard_metadata.ingress_port, meta.selected_count);
+        selected_count_reg.write((bit<32>)standard_metadata.egress_port, meta.selected_count);
     }
 
     action switch_state(){
@@ -293,16 +292,16 @@ control MyEgress(inout headers hdr,
                 pre_time_reg.write((bit<32>)standard_metadata.egress_port, cur_time);
                 time_init.write(1, 1);
                 time_t threet = 1000;
-                time_length.write((bit<32>)standard_metadata.egress_port, threet);
+                time_length_reg.write((bit<32>)standard_metadata.egress_port, threet);
             }
 
             mark_packet();
             count_update();
-            state_reg.read(meta.state, (bit<32>)standard_metadata.engress_port);
+            state_reg.read(meta.state, (bit<32>)standard_metadata.egress_port);
             if(meta.state == 0){
                 if(meta.count == 1){
                     meta.pre_time = standard_metadata.egress_global_timestamp;
-                    pre_time.write((bit<32>)standard_metadata.egress_port);
+                    pre_time_reg.write((bit<32>)standard_metadata.egress_port, meta.pre_time);
                 }
                 pre_time_reg.read(meta.pre_time, (bit<32>)standard_metadata.egress_port);
                 meta.diff_time = standard_metadata.egress_global_timestamp - meta.pre_time;
@@ -314,7 +313,7 @@ control MyEgress(inout headers hdr,
                 }
             }
             else{
-                selected_count_reg.read((bit<32>)standard_metadata.egress_port, meta.selected_count);
+                selected_count_reg.read(meta.selected_count, (bit<32>)standard_metadata.egress_port);
                 if(meta.count == meta.selected_count){
                     switch_mark();
                     count_reset();
